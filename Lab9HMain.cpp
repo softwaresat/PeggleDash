@@ -4,6 +4,7 @@
 // Your name
 // Last Modified: 12/26/2024
 
+#include <cstdint>
 #include <stdio.h>
 #include <stdint.h>
 #include <ti/devices/msp/msp.h>
@@ -19,9 +20,20 @@
 #include "Switch.h"
 #include "Sound.h"
 #include "images/images.h"
+#include "Ball.h"
+#include "Sounds.h"
+#include "sounds.h"
+
+
 extern "C" void __disable_irq(void);
 extern "C" void __enable_irq(void);
 extern "C" void TIMG12_IRQHandler(void);
+#define BUTTON_DOWN  (1 << 0)  // PA15
+#define BUTTON_RIGHT (1 << 1)  // PA16
+#define BUTTON_LEFT  (1 << 2)  // PA27
+#define BUTTON_UP    (1 << 3)  // PA28
+
+
 // ****note to ECE319K students****
 // the data sheet says the ADC does not work when clock is 80 MHz
 // however, the ADC seems to work on my boards at 80 MHz
@@ -41,6 +53,10 @@ uint32_t Random(uint32_t n){
 }
 
 SlidePot Sensor(1500,0); // copy calibration from Lab 7
+uint32_t data;
+uint32_t input;
+Ball currBall;
+
 
 // games  engine runs at 30Hz
 void TIMG12_IRQHandler(void){uint32_t pos,msg;
@@ -48,6 +64,18 @@ void TIMG12_IRQHandler(void){uint32_t pos,msg;
     GPIOB->DOUTTGL31_0 = GREEN; // toggle PB27 (minimally intrusive debugging)
     GPIOB->DOUTTGL31_0 = GREEN; // toggle PB27 (minimally intrusive debugging)
 // game engine goes here
+    data = Sensor.In();
+    data = Sensor.Convert(data);
+
+    input = Switch_In();
+
+    if(!currBall && input & BUTTON_DOWN == BUTTON_DOWN){
+      currBall = new Ball(data*256);
+    } else if (currBall){
+      currBall.moveBall();
+    }
+
+
     // 1) sample slide pot
     // 2) read input switches
     // 3) move sprites
@@ -87,7 +115,7 @@ int main(void){ // main1
   __disable_irq();
   PLL_Init(); // set bus speed
   LaunchPad_Init();
-  ST7735_InitPrintf();
+  ST7735_InitPrintf(INITR_BLACKTAB);
   ST7735_FillScreen(0x0000);            // set screen to black
   for(int myPhrase=0; myPhrase<= 2; myPhrase++){
     for(int myL=0; myL<= 3; myL++){
@@ -121,7 +149,7 @@ int main2(void){ // main2
   __disable_irq();
   PLL_Init(); // set bus speed
   LaunchPad_Init();
-  ST7735_InitPrintf();
+  ST7735_InitPrintf(INITR_BLACKTAB);
     //note: if you colors are weird, see different options for
     // ST7735_InitR(INITR_REDTAB); inside ST7735_InitPrintf()
   ST7735_FillScreen(ST7735_BLACK);
@@ -178,13 +206,13 @@ int main4(void){ uint32_t last=0,now;
   while(1){
     now = Switch_In(); // one of your buttons
     if((last == 0)&&(now == 1)){
-      Sound_Shoot(); // call one of your sounds
+      Sound_Shoot(levelOne); // call one of your sounds
     }
     if((last == 0)&&(now == 2)){
-      Sound_Killed(); // call one of your sounds
+      Sound_Killed(levelTwo); // call one of your sounds
     }
     if((last == 0)&&(now == 4)){
-      Sound_Explosion(); // call one of your sounds
+      Sound_Explosion(levelThree); // call one of your sounds
     }
     if((last == 0)&&(now == 8)){
       Sound_Fastinvader1(); // call one of your sounds
@@ -197,7 +225,7 @@ int main5(void){ // final main
   __disable_irq();
   PLL_Init(); // set bus speed
   LaunchPad_Init();
-  ST7735_InitPrintf();
+  ST7735_InitPrintf(INITR_BLACKTAB);
     //note: if you colors are weird, see different options for
     // ST7735_InitR(INITR_REDTAB); inside ST7735_InitPrintf()
   ST7735_FillScreen(ST7735_BLACK);

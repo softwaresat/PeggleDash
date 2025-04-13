@@ -3,14 +3,20 @@
 // Sound assets in sounds/sounds.h
 // your name
 // your data 
+#include <cstdint>
 #include <stdint.h>
 #include <ti/devices/msp/msp.h>
 #include "Sound.h"
+#include "sounds.h"
 #include "sounds/sounds.h"
 #include "../inc/DAC5.h"
 #include "../inc/Timer.h"
+#include "Sounds.h"
 
 
+uint32_t Index = 0;
+uint8_t* outTable;
+uint32_t len;
 
 void SysTick_IntArm(uint32_t period, uint32_t priority){
   // write this
@@ -19,11 +25,22 @@ void SysTick_IntArm(uint32_t period, uint32_t priority){
 // initialize any global variables
 // Initialize the 5 bit DAC
 void Sound_Init(void){
-// write this
- 
+
+  uint32_t period = 7273;
+    Index = 0;
+
+  SysTick->CTRL = 0;         // disable SysTick during setup
+  SysTick->LOAD = period-1;  // reload value
+  SysTick->VAL = 0;          // any write to current clears it
+  SCB->SHP[1] = SCB->SHP[1]&(~0xC0000000)|0x40000000; // set priority = 1
+  SysTick->CTRL = 0x1F;    // enable SysTick with core clock and interrupt 
 }
 extern "C" void SysTick_Handler(void);
 void SysTick_Handler(void){ // called at 11 kHz
+    DAC5_Out(outTable[Index]);
+  
+    Index++;
+    Index &= 0x1F;  
   // output one value to DAC if a sound is active
     // output one value to DAC if a sound is active
 
@@ -40,7 +57,12 @@ void SysTick_Handler(void){ // called at 11 kHz
 // Output: none
 // special cases: as you wish to implement
 void Sound_Start(const uint8_t *pt, uint32_t count){
-// write this
+
+    outTable = pt;
+    len = count;
+
+    SysTick->LOAD = period-1;
+    SysTick->VAL = 0;  
   
 }
 
