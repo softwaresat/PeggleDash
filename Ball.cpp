@@ -1,4 +1,5 @@
 #include "Ball.h"
+#include "GameObject.h"
 #include <cstdint>
 #include <iostream>
 
@@ -228,33 +229,27 @@ const uint16_t ballSprite[16][16] = {
 
 uint16_t tableLength = 201;
 
-Ball_t sprite;
-
-Ball::Ball() : value(int32_t angle) {
+Ball::Ball(int32_t angle) {
 
     uint32_t angleIndex = angleToIndex(angle);
 
-    sprite.x = 64*256;
-    sprite.y = 80*256;
-    sprite.vx = angleToVel[angleIndex][1];
-    sprite.vy = angleToVel[angleIndex][2]
-    sprite.image = &ballSprite;
-    sprite.h, ball.w = 16;
-}
-
-Ball::~Ball() {
-    free(sprite);
+    x = 64*256;
+    y = 80*256;
+    vx = angleToVel[angleIndex][1];
+    vy = angleToVel[angleIndex][2]
+    image = &ballSprite;
+    h, w = 16;
 }
 
 void Ball::moveBall(){
-    sprite.x += sprite.vx;
-    sprite.y -= sprite.vy;
+    x += vx;
+    y -= vy;
 
-    if(sprite.x >= 128*256 || sprite.x <= 0){
-        sprite.vx = -sprite.vx;
+    if(x >= 128*256 || x <= 0){
+        vx = -vx;
     }
-    if(sprite.y >= 160*256 || sprite.y <= 0){
-        sprite.vy = -sprite.vy;
+    if(y >= 160*256 || y <= 0){
+        vy = -vy;
     }
 }
 
@@ -265,8 +260,4 @@ int32_t Ball::angleToIndex(int32_t angle){
         }
     }
     return -1;
-}
-
-void Ball::destroyBall(){
-    free(sprite);
 }

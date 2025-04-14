@@ -2,23 +2,19 @@
 #define BALL_H
 
 #include <cstdint>
-class Ball {
+#include "GameObject.h"
+
+struct Ball: public GameObject {
 public:
-    typedef struct Ball {
-        int32_t x, y;
-        int32_t vx, vy;
-        int32_t angle;
-        uint16_t const *image;
-        uint32_t const h, w;
-    } Ball_t;
-    Ball();               // Constructor
+    int32_t vx = 0, vy = 0; // Velocity
+    int32_t angle;
+    Ball(int32_t angle);               // Constructor
     ~Ball();
     
     void moveBall();
     void destroyBall();      // Example method
 
 private:
-    Ball_t sprite;
     uint16_t tableLength;
     static const int32_t angleToVel[][];
     int16_t angleToIndex(int32_t angle);

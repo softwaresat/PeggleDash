@@ -1,14 +1,18 @@
 #ifndef LEVEL_H
 #define LEVEL_H
 
+#define MAP_WIDTH 16
+#define MAP_HEIGHT 20
+
 #include <cstdint>
-class Level {
+#include "GameObject.h"
+
+struct Level {
 public:
-    typedef struct Level {
-        uint8_t levelNum;
-        uint16_t *image;
-        unsigned char sound_loop; 
-    } Level_t;
+    uint8_t levelNum;
+    uint16_t *image;
+    unsigned char sound_loop; 
+    GameObject levelMap[MAP_HEIGHT][MAP_WIDTH];
     Level();               // Constructor
 
     void setImage(uint16_t *img);

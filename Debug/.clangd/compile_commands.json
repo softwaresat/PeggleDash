@@ -88,5 +88,10 @@
       "directory" : "C:/Users/satvi/Downloads/MSPM0_ValvanoWare/ECE319K_Lab9H/Debug",
       "command"   : "clang++ -I\"C:/Users/satvi/Downloads/MSPM0_ValvanoWare/ECE319K_Lab9H\" -I\"C:/Users/satvi/Downloads/MSPM0_ValvanoWare/ECE319K_Lab9H/Debug\" -I\"C:/ti/mspm0_sdk_2_03_00_07/source/third_party/CMSIS/Core/Include\" -I\"C:/ti/mspm0_sdk_2_03_00_07/source\" -D__MSPM0G3507__ -isystem\"C:/ti/ccs2000/ccs/tools/compiler/ti-cgt-armllvm_4.0.1.LTS/include/armv7em-ti-none-eabihf/c++/v1\" -isystem\"C:/ti/ccs2000/ccs/tools/compiler/ti-cgt-armllvm_4.0.1.LTS/include/c++/v1\" -isystem\"C:/ti/ccs2000/ccs/tools/compiler/ti-cgt-armllvm_4.0.1.LTS/lib/clang/18/include\" -isystem\"C:/ti/ccs2000/ccs/tools/compiler/ti-cgt-armllvm_4.0.1.LTS/include/c\" -I\"C:/Users/satvi/Downloads/MSPM0_ValvanoWare/ECE319K_Lab9H/Debug/syscfg\"",
       "file"      : "C:/Users/satvi/Downloads/MSPM0_ValvanoWare/ECE319K_Lab9H/Sounds.cpp"
+   },
+   {
+      "directory" : "C:/Users/satvi/Downloads/MSPM0_ValvanoWare/ECE319K_Lab9H/Debug",
+      "command"   : "clang++ -I\"C:/Users/satvi/Downloads/MSPM0_ValvanoWare/ECE319K_Lab9H\" -I\"C:/Users/satvi/Downloads/MSPM0_ValvanoWare/ECE319K_Lab9H/Debug\" -I\"C:/ti/mspm0_sdk_2_03_00_07/source/third_party/CMSIS/Core/Include\" -I\"C:/ti/mspm0_sdk_2_03_00_07/source\" -D__MSPM0G3507__ -isystem\"C:/ti/ccs2000/ccs/tools/compiler/ti-cgt-armllvm_4.0.1.LTS/include/armv7em-ti-none-eabihf/c++/v1\" -isystem\"C:/ti/ccs2000/ccs/tools/compiler/ti-cgt-armllvm_4.0.1.LTS/include/c++/v1\" -isystem\"C:/ti/ccs2000/ccs/tools/compiler/ti-cgt-armllvm_4.0.1.LTS/lib/clang/18/include\" -isystem\"C:/ti/ccs2000/ccs/tools/compiler/ti-cgt-armllvm_4.0.1.LTS/include/c\" -I\"C:/Users/satvi/Downloads/MSPM0_ValvanoWare/ECE319K_Lab9H/Debug/syscfg\"",
+      "file"      : "C:/Users/satvi/Downloads/MSPM0_ValvanoWare/ECE319K_Lab9H/Peg.cpp"
    }
 ]

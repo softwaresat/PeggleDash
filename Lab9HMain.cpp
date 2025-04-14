@@ -15,6 +15,7 @@
 #include "../inc/Timer.h"
 #include "../inc/SlidePot.h"
 #include "../inc/DAC5.h"
+#include "GameObject.h"
 #include "SmallFont.h"
 #include "LED.h"
 #include "Switch.h"
@@ -23,6 +24,7 @@
 #include "Ball.h"
 #include "Sounds.h"
 #include "sounds.h"
+#include "Peg.h"
 
 
 extern "C" void __disable_irq(void);
