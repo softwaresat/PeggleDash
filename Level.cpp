@@ -12,5 +12,5 @@ void Level::setImage(uint16_t *img){
 }
 
 void Level::setSound(unsigned char sound){
-    this.sound = sound;
+    this->sound = sound;
 }

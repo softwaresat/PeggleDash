@@ -15,7 +15,7 @@
 
 
 uint32_t Index = 0;
-uint8_t* outTable;
+const uint8_t* outTable = nullptr;
 uint32_t len;
 
 void SysTick_IntArm(uint32_t period, uint32_t priority){
@@ -61,7 +61,7 @@ void Sound_Start(const uint8_t *pt, uint32_t count){
     outTable = pt;
     len = count;
 
-    SysTick->LOAD = period-1;
+    SysTick->LOAD = count-1;
     SysTick->VAL = 0;  
   
 }

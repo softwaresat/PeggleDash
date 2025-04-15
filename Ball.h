@@ -6,19 +6,21 @@
 
 struct Ball: public GameObject {
 public:
-    int32_t vx = 0, vy = 0; // Velocity
-    int32_t angle;
+   
     Ball(int32_t angle);               // Constructor
+    void reset(int32_t angle);
     ~Ball();
     
+    bool getActive();
     void moveBall();
     void destroyBall();      // Example method
 
 private:
+    int32_t vx = 0, vy = 0; // Velocity
+    int32_t angle;
+    bool active;
     uint16_t tableLength;
-    static const int32_t angleToVel[][];
-    int16_t angleToIndex(int32_t angle);
-    const uint16_t ballSprite[16][16];
+    int32_t angleToIndex(int32_t angle);
 };
 
 #endif 

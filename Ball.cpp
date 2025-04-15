@@ -4,7 +4,7 @@
 #include <iostream>
 
 
-const int32_t angleToVel[][]= {
+const int32_t angleToVel[201][3]= {
         {   0,  128, -222 }, // pot=0.00, angle=-60.0°
         {   3,  133, -219 }, // pot=0.01, angle=-58.8°
         {   5,  137, -216 }, // pot=0.02, angle=-57.6°
@@ -208,7 +208,7 @@ const int32_t angleToVel[][]= {
         { 512, -256,    0 }, // pot=2.00, angle=180.0°
     };
 
-const uint16_t ballSprite[16][16] = {
+static uint16_t ballSprite[16][16] = {
     { 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x31A6, 0x31C6, 0x31C6, 0x31C6, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000 },
     { 0x0000, 0x0000, 0x0000, 0x0000, 0x31A6, 0x3A28, 0x536F, 0x6412, 0x6C33, 0x6BF1, 0x4249, 0x31C7, 0x0000, 0x0000, 0x0000, 0x0000 },
     { 0x0000, 0x0000, 0x0000, 0x31A6, 0x534E, 0x7495, 0x7CD6, 0x8D78, 0x9DB9, 0x9598, 0x8517, 0x5B8F, 0x31A6, 0x0000, 0x0000, 0x0000 },
@@ -229,16 +229,18 @@ const uint16_t ballSprite[16][16] = {
 
 uint16_t tableLength = 201;
 
-Ball::Ball(int32_t angle) {
+Ball::Ball(int32_t angle) 
+{
 
     uint32_t angleIndex = angleToIndex(angle);
-
+    active = true;
     x = 64*256;
     y = 80*256;
     vx = angleToVel[angleIndex][1];
-    vy = angleToVel[angleIndex][2]
-    image = &ballSprite;
-    h, w = 16;
+    vy = angleToVel[angleIndex][2];
+    image = &ballSprite[0][0];
+    h = 16;
+    w = 16;
 }
 
 void Ball::moveBall(){
@@ -260,4 +262,17 @@ int32_t Ball::angleToIndex(int32_t angle){
         }
     }
     return -1;
+}
+
+void Ball::reset(int32_t angle){
+    uint32_t angleIndex = angleToIndex(angle);
+    active = true;
+    x = 64*256;
+    y = 80*256;
+    vx = angleToVel[angleIndex][1];
+    vy = angleToVel[angleIndex][2];
+}
+
+bool Ball::getActive(){
+    return active;
 }

@@ -11,12 +11,12 @@
 
 
 Peg::Peg(int32_t x, int32_t y, int32_t hits) {
-    this.x = x;
-    this.y = y;
-    this.hits = hits;
+    this->x = x;
+    this->y = y;
+    this->hits = hits;
 }
 
-void Peg:updatePeg(){
+void Peg::updatePeg(){
     hits--;
     // Update color of peg accordingly
 }

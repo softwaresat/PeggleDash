@@ -9,18 +9,18 @@
 
 struct Level {
 public:
-    uint8_t levelNum;
-    uint16_t *image;
-    unsigned char sound_loop; 
+    
     GameObject levelMap[MAP_HEIGHT][MAP_WIDTH];
-    Level();               // Constructor
+    Level(uint8_t num);               // Constructor
 
     void setImage(uint16_t *img);
     void setSound(unsigned char sound);
     ~Level();
 
 private:
-    
+    uint8_t levelNum;
+    uint16_t *image;
+    unsigned char sound; 
 };
 
 #endif 

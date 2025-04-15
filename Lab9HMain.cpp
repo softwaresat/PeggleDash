@@ -57,7 +57,7 @@ uint32_t Random(uint32_t n){
 SlidePot Sensor(1500,0); // copy calibration from Lab 7
 uint32_t data;
 uint32_t input;
-Ball currBall;
+Ball* currBall = new Ball(0);
 
 
 // games  engine runs at 30Hz
@@ -71,10 +71,10 @@ void TIMG12_IRQHandler(void){uint32_t pos,msg;
 
     input = Switch_In();
 
-    if(!currBall && input & BUTTON_DOWN == BUTTON_DOWN){
-      currBall = new Ball(data*256);
-    } else if (currBall){
-      currBall.moveBall();
+    if(!currBall->getActive() && (input & BUTTON_DOWN) == BUTTON_DOWN){
+      currBall->reset(data);
+    } else if (currBall->getActive()){
+      currBall->moveBall();
     }
 
 
@@ -208,13 +208,13 @@ int main4(void){ uint32_t last=0,now;
   while(1){
     now = Switch_In(); // one of your buttons
     if((last == 0)&&(now == 1)){
-      Sound_Shoot(levelOne); // call one of your sounds
+      // Sound_Shoot(levelOne); // call one of your sounds
     }
     if((last == 0)&&(now == 2)){
-      Sound_Killed(levelTwo); // call one of your sounds
+      // Sound_Killed(levelTwo); // call one of your sounds
     }
     if((last == 0)&&(now == 4)){
-      Sound_Explosion(levelThree); // call one of your sounds
+      // Sound_Explosion(levelThree); // call one of your sounds
     }
     if((last == 0)&&(now == 8)){
       Sound_Fastinvader1(); // call one of your sounds
