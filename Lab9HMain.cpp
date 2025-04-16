@@ -23,7 +23,6 @@
 #include "images/images.h"
 #include "Ball.h"
 #include "Sounds.h"
-#include "sounds.h"
 #include "Peg.h"
 
 
@@ -57,7 +56,7 @@ uint32_t Random(uint32_t n){
 SlidePot Sensor(1500,0); // copy calibration from Lab 7
 uint32_t data;
 uint32_t input;
-Ball* currBall = new Ball(0);
+Ball* currBall =  new Ball(28);
 
 
 // games  engine runs at 30Hz
@@ -71,10 +70,14 @@ void TIMG12_IRQHandler(void){uint32_t pos,msg;
 
     input = Switch_In();
 
-    if(!currBall->getActive() && (input & BUTTON_DOWN) == BUTTON_DOWN){
+    if((input & BUTTON_DOWN) == BUTTON_DOWN){
       currBall->reset(data);
+        ST7735_FillScreen(ST7735_BLACK);
+        ST7735_DrawBitmap(currBall->getX(), currBall->getY(), currBall->getImage(), currBall->getW(),currBall->getH());
     } else if (currBall->getActive()){
       currBall->moveBall();
+       ST7735_FillScreen(ST7735_BLACK);
+        ST7735_DrawBitmap(currBall->getX(), currBall->getY(), currBall->getImage(), currBall->getW(),currBall->getH());
     }
 
 
@@ -112,7 +115,7 @@ const char *Phrases[3][4]={
   {Language_English,Language_Spanish,Language_Portuguese,Language_French}
 };
 // use main1 to observe special characters
-int main(void){ // main1
+int main1(void){ // main1
     char l;
   __disable_irq();
   PLL_Init(); // set bus speed
@@ -191,7 +194,15 @@ int main3(void){ // main3
   Switch_Init(); // initialize switches
   LED_Init(); // initialize LED
   while(1){
-    // write code to test switches and LEDs
+    ST7735_InitPrintf(INITR_BLACKTAB);
+    //note: if you colors are weird, see different options for
+    // ST7735_InitR(INITR_REDTAB); inside ST7735_InitPrintf()
+  ST7735_FillScreen(ST7735_BLACK);
+  
+    input = Switch_In();
+    ST7735_SetCursor(1, 1);
+    ST7735_OutUDec(input);
+
 
   }
 }
@@ -223,7 +234,7 @@ int main4(void){ uint32_t last=0,now;
   }
 }
 // ALL ST7735 OUTPUT MUST OCCUR IN MAIN
-int main5(void){ // final main
+int main(void){ // final main
   __disable_irq();
   PLL_Init(); // set bus speed
   LaunchPad_Init();
@@ -237,11 +248,19 @@ int main5(void){ // final main
   Sound_Init();  // initialize sound
   TExaS_Init(0,0,&TExaS_LaunchPadLogicPB27PB26); // PB27 and PB26
     // initialize interrupts on TimerG12 at 30 Hz
-  
+  TimerG12_Init();
+  TimerG12_IntArm(2666667, 2);
   // initialize all data structures
   __enable_irq();
+    // ST7735_DrawBitmap(22, 159, PlayerShip0, 18,8); // player ship bottom
 
-  while(1){
+  ST7735_DrawBitmap(currBall->getX()/256, currBall->getY()/256, currBall->getImage(), currBall->getW(),currBall->getH());
+
+while(1){
+    // data = Sensor.In();
+    // data = Sensor.Convert(data);
+    // currBall->reset(data);
+    // ST7735_DrawBitmap(currBall->getX(), currBall->getY(), currBall->getImage(), currBall->getW(),currBall->getH());
     // wait for semaphore
        // clear semaphore
        // update ST7735R

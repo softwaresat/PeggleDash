@@ -12,6 +12,12 @@ public:
     ~Ball();
     
     bool getActive();
+    int16_t getX();
+    int16_t getY();
+    int16_t getW();
+    int16_t getH();
+    const uint16_t* getImage();
+
     void moveBall();
     void destroyBall();      // Example method
 
