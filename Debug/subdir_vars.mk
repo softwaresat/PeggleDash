@@ -9,6 +9,7 @@ CPP_SRCS += \
 ../Ball.cpp \
 C:/Users/satvi/Downloads/MSPM0_ValvanoWare/inc/Clock.cpp \
 C:/Users/satvi/Downloads/MSPM0_ValvanoWare/inc/DAC5.cpp \
+../Hole.cpp \
 ../LED.cpp \
 ../Lab9HMain.cpp \
 C:/Users/satvi/Downloads/MSPM0_ValvanoWare/inc/LaunchPad.cpp \
@@ -31,6 +32,7 @@ OBJS += \
 ./Ball.o \
 ./Clock.o \
 ./DAC5.o \
+./Hole.o \
 ./LED.o \
 ./Lab9HMain.o \
 ./LaunchPad.o \
@@ -50,6 +52,7 @@ CPP_DEPS += \
 ./Ball.d \
 ./Clock.d \
 ./DAC5.d \
+./Hole.d \
 ./LED.d \
 ./Lab9HMain.d \
 ./LaunchPad.d \
@@ -69,6 +72,7 @@ OBJS__QUOTED += \
 "Ball.o" \
 "Clock.o" \
 "DAC5.o" \
+"Hole.o" \
 "LED.o" \
 "Lab9HMain.o" \
 "LaunchPad.o" \
@@ -88,6 +92,7 @@ CPP_DEPS__QUOTED += \
 "Ball.d" \
 "Clock.d" \
 "DAC5.d" \
+"Hole.d" \
 "LED.d" \
 "Lab9HMain.d" \
 "LaunchPad.d" \
@@ -107,6 +112,7 @@ CPP_SRCS__QUOTED += \
 "../Ball.cpp" \
 "C:/Users/satvi/Downloads/MSPM0_ValvanoWare/inc/Clock.cpp" \
 "C:/Users/satvi/Downloads/MSPM0_ValvanoWare/inc/DAC5.cpp" \
+"../Hole.cpp" \
 "../LED.cpp" \
 "../Lab9HMain.cpp" \
 "C:/Users/satvi/Downloads/MSPM0_ValvanoWare/inc/LaunchPad.cpp" \

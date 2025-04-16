@@ -12,8 +12,9 @@ public:
     ~Ball();
     
     bool getActive();
-    int16_t getX();
-    int16_t getY();
+    void setActive();
+    int32_t getX();
+    int32_t getY();
     int16_t getW();
     int16_t getH();
     const uint16_t* getImage();

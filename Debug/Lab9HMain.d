@@ -34,7 +34,7 @@ Lab9HMain.o: ../Lab9HMain.cpp \
  ../../inc/ST7735.h ../../inc/Clock.h ../../inc/LaunchPad.h \
  ../../inc/TExaS.h ../../inc/Timer.h ../../inc/SlidePot.h \
  ../../inc/DAC5.h ../GameObject.h ../SmallFont.h ../LED.h ../Switch.h \
- ../Sound.h ../images/images.h ../Ball.h ../Sounds.h ../Peg.h
+ ../Sound.h ../images/images.h ../Ball.h ../Sounds.h ../Peg.h ../Hole.h
 C:/ti/mspm0_sdk_2_03_00_07/source/ti/devices/msp/msp.h:
 C:/ti/mspm0_sdk_2_03_00_07/source/ti/devices/DeviceFamily.h:
 C:/ti/mspm0_sdk_2_03_00_07/source/ti/devices/msp/m0p/mspm0g350x.h:
@@ -81,3 +81,4 @@ C:/ti/mspm0_sdk_2_03_00_07/source/ti/devices/msp/peripherals/m0p/sysctl/hw_sysct
 ../Ball.h:
 ../Sounds.h:
 ../Peg.h:
+../Hole.h:

@@ -4,7 +4,7 @@
 #include <cstdint>
 
 struct GameObject {
-    int16_t x, y;           // Position
+    int32_t x, y;           // Position
     uint16_t w = 0, h = 0;  // Size
     const uint16_t  *image;
 
