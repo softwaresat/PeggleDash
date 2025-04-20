@@ -25,6 +25,7 @@
 #include "Sounds.h"
 #include "Peg.h"
 #include "Hole.h"
+#include "Level.h"
 
 
 extern "C" void __disable_irq(void);
@@ -34,7 +35,7 @@ extern "C" void TIMG12_IRQHandler(void);
 #define BUTTON_RIGHT (1 << 1)  // PA16
 #define BUTTON_LEFT  (1 << 2)  // PA27
 #define BUTTON_UP    (1 << 3)  // PA28
-
+#define FIX 256
 
 // ****note to ECE319K students****
 // the data sheet says the ADC does not work when clock is 80 MHz
@@ -57,26 +58,19 @@ uint32_t Random(uint32_t n){
 SlidePot Sensor(1500,0); // copy calibration from Lab 7
 uint32_t data;
 uint32_t input;
-Ball* currBall =  new Ball(28);
+Ball* currBall =  new Ball(0);
 Hole* movingHole = new Hole();
+Level* level = new Level(1);
 
-const uint16_t BlackCoverSprite[256] = {
- 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
- 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
- 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
- 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
- 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
- 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
- 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
- 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
- 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
- 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
- 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
- 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
- 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
- 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
- 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
- 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000
+const uint16_t BlackCoverSprite[64] = {
+ 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
+ 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
+ 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
+ 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 
+ 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 
+ 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 
+ 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 
+ 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 
 };
 
 
@@ -85,32 +79,13 @@ void TIMG12_IRQHandler(void){uint32_t pos,msg;
   if((TIMG12->CPU_INT.IIDX) == 1){ // this will acknowledge
     GPIOB->DOUTTGL31_0 = GREEN; // toggle PB27 (minimally intrusive debugging)
     GPIOB->DOUTTGL31_0 = GREEN; // toggle PB27 (minimally intrusive debugging)
-// game engine goes here
+// game engine goes 
     data = Sensor.In();
-    data = Sensor.Convert(data);
-
     input = Switch_In();
-    ST7735_DrawBitmap((int16_t)(currBall->getX()/256), (int16_t)(currBall->getY()/256)+10, BlackCoverSprite, currBall->getW(),currBall->getH());
-    ST7735_DrawBitmap((int16_t)(movingHole->getX()/256), (int16_t)(movingHole->getY()/256)-10, BlackCoverSprite, 16,16);
-
+    //movingHole->setXPrev(movingHole->getX());
+    //movingHole->setYPrev(movingHole->getY());
     movingHole->moveHole();
-    ST7735_DrawBitmap((int16_t)(movingHole->getX()/256), (int16_t)(movingHole->getY()/256)-10, movingHole->getImage(), 16,16);
-
-
-    if(!currBall->getActive()){
-          currBall->reset(data);
-        ST7735_DrawBitmap((int16_t)(currBall->getX()/256), (int16_t)(currBall->getY()/256)+10, currBall->getImage(), currBall->getW(),currBall->getH());
-    }
-    
-    if(!currBall->getActive() && (input & BUTTON_DOWN) == BUTTON_DOWN){
-        currBall->setActive();
-        ST7735_DrawBitmap((int16_t)(currBall->getX()/256), (int16_t)(currBall->getY()/256), currBall->getImage(), currBall->getW(),currBall->getH());
-    } else if(currBall->getActive()){
-      currBall->moveBall();
-        ST7735_DrawBitmap((int16_t)(currBall->getX()/256), (int16_t)(currBall->getY()/256), currBall->getImage(), currBall->getW(),currBall->getH());
-    }
-
-
+    currBall->moveBall();
     // 1) sample slide pot
     // 2) read input switches
     // 3) move sprites
@@ -150,7 +125,7 @@ int main1(void){ // main1
   __disable_irq();
   PLL_Init(); // set bus speed
   LaunchPad_Init();
-  ST7735_InitPrintf(INITR_BLACKTAB);
+  ST7735_InitPrintf(INITR_REDTAB);
   ST7735_FillScreen(0x0000);            // set screen to black
   for(int myPhrase=0; myPhrase<= 2; myPhrase++){
     for(int myL=0; myL<= 3; myL++){
@@ -184,7 +159,7 @@ int main2(void){ // main2
   __disable_irq();
   PLL_Init(); // set bus speed
   LaunchPad_Init();
-  ST7735_InitPrintf(INITR_BLACKTAB);
+  ST7735_InitPrintf(INITR_REDTAB);
     //note: if you colors are weird, see different options for
     // ST7735_InitR(INITR_REDTAB); inside ST7735_InitPrintf()
   ST7735_FillScreen(ST7735_BLACK);
@@ -224,7 +199,7 @@ int main3(void){ // main3
   Switch_Init(); // initialize switches
   LED_Init(); // initialize LED
   while(1){
-    ST7735_InitPrintf(INITR_BLACKTAB);
+    ST7735_InitPrintf(INITR_REDTAB);
     //note: if you colors are weird, see different options for
     // ST7735_InitR(INITR_REDTAB); inside ST7735_InitPrintf()
   ST7735_FillScreen(ST7735_BLACK);
@@ -269,7 +244,7 @@ int main(void){ // final main
   __disable_irq();
   PLL_Init(); // set bus speed
   LaunchPad_Init();
-  ST7735_InitPrintf(INITR_BLACKTAB);
+  ST7735_InitPrintf(INITR_REDTAB);
     //note: if you colors are weird, see different options for
     // ST7735_InitR(INITR_REDTAB); inside ST7735_InitPrintf()
   ST7735_FillScreen(ST7735_BLACK);
@@ -283,15 +258,12 @@ int main(void){ // final main
   TimerG12_IntArm(2666667, 2);
   // initialize all data structures
   __enable_irq();
-    // ST7735_DrawBitmap(22, 159, PlayerShip0, 18,8); // player ship bottom
-
-  ST7735_DrawBitmap(currBall->getX()/256, currBall->getY()/256, currBall->getImage(), currBall->getW(),currBall->getH());
-
+  ST7735_DrawBitmap(0, 160, level->getImage(), 128, 160);
 while(1){
-    // data = Sensor.In();
-    // data = Sensor.Convert(data);
-    // currBall->reset(data);
-    // ST7735_DrawBitmap(currBall->getX(), currBall->getY(), currBall->getImage(), currBall->getW(),currBall->getH());
+    data = Sensor.Convert(data);
+    currBall->reset(data);
+    ST7735_DrawBitmap(currBall->getX()/FIX, currBall->getY()/FIX, currBall->getImage(), 8, 8);
+    ST7735_DrawBitmap(movingHole->getX()/FIX, movingHole->getY()/FIX, movingHole->getImage(), 48, 24);
     // wait for semaphore
        // clear semaphore
        // update ST7735R

@@ -7,20 +7,17 @@
 #include <cstdint>
 #include "GameObject.h"
 
-struct Level {
+struct Level: public GameObject {
 public:
     
-    GameObject levelMap[MAP_HEIGHT][MAP_WIDTH];
     Level(uint8_t num);               // Constructor
-
-    void setImage(uint16_t *img);
+    const uint16_t* getImage();
     void setSound(unsigned char sound);
     ~Level();
 
 private:
     uint8_t levelNum;
-    uint16_t *image;
-    unsigned char sound; 
+    unsigned char sound;
 };
 
 #endif 

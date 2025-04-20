@@ -17,12 +17,17 @@ public:
     bool getActive();
     void setActive();
     const uint16_t* getImage();
-
+    int32_t getXPrev();
+    int32_t getYPrev();
+    int32_t setXPrev(int32_t xval);
+    int32_t setYPrev(int32_t yval);
     void moveHole();
 
 private:
     int32_t vx; // Velocity
     bool active;
+    int32_t xprev;
+    int32_t yprev;
 };
 
 #endif 
