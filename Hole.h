@@ -19,8 +19,8 @@ public:
     const uint16_t* getImage();
     int32_t getXPrev();
     int32_t getYPrev();
-    int32_t setXPrev(int32_t xval);
-    int32_t setYPrev(int32_t yval);
+    void setXPrev(int32_t xval);
+    void setYPrev(int32_t yval);
     void moveHole();
 
 private:

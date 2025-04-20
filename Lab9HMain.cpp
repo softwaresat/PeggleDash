@@ -82,8 +82,13 @@ void TIMG12_IRQHandler(void){uint32_t pos,msg;
 // game engine goes 
     data = Sensor.In();
     input = Switch_In();
+    currBall->setCounter(currBall->getCounter() + 1);
     //movingHole->setXPrev(movingHole->getX());
     //movingHole->setYPrev(movingHole->getY());
+    if (currBall->getCounter() == 30) {
+      currBall->IncrementVY();
+      currBall->setCounter(0);
+    }
     movingHole->moveHole();
     currBall->moveBall();
     // 1) sample slide pot

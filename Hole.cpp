@@ -106,11 +106,11 @@ int32_t Hole::getY(){
     return y;
 }
 
-int32_t Hole::setXPrev(int32_t xval){
+void Hole::setXPrev(int32_t xval){
     xprev = xval;
 }
 
-int32_t Hole::setYPrev(int32_t yval){
+void Hole::setYPrev(int32_t yval){
     yprev = yval;
 }
 

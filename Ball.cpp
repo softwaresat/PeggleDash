@@ -47,12 +47,12 @@ const unsigned short ball[] = {
 
 Ball::Ball(int32_t angle) 
 {
-    int index = (angle * (20))/2000;
+    counter = 0;
     active = false;
     x = 64 * 256;
-    y = 0;
-    vx = angleTable[index][0] / 256;
-    vy = angleTable[index][1] / 256;
+    y = 8 * 256;
+    vx = angleTable[220][0];
+    vy = angleTable[220][1]; 
     image = ball;
     h = 8;
     w = 8;
@@ -60,9 +60,8 @@ Ball::Ball(int32_t angle)
 
 void Ball::moveBall(){
 
-    x += vx;
-    y += vy;
-
+    x += vx; 
+    y += vy; 
     if((x / 256) + 8 >= 128 || x <= 0){
         vx = -vx;
     }
@@ -72,9 +71,8 @@ void Ball::moveBall(){
 }
 
 void Ball::reset(int32_t angle){
-    int index = (angle * (20))/2000;
     active = false;
-    vx = angleTable[index][0] / 256;
+    vx = angleTable[    ][0] / 256;
     vy = angleTable[index][1] / 256;    
 }
 
@@ -84,6 +82,18 @@ bool Ball::getActive(){
 
 void Ball::setActive(){
     active = true;
+}
+
+void Ball::IncrementVY(){
+    vy += 256;
+}
+
+void Ball::setCounter(int8_t val){
+    counter = val;
+}
+
+int8_t Ball::getCounter(){
+    return counter;
 }
 
 int32_t Ball::getX(){
