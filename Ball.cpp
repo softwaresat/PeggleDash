@@ -72,8 +72,8 @@ void Ball::moveBall(){
 
 void Ball::reset(int32_t angle){
     active = false;
-    vx = angleTable[    ][0] / 256;
-    vy = angleTable[index][1] / 256;    
+    vx = angleTable[10][0] / 256;
+    vy = angleTable[10][1] / 256;    
 }
 
 bool Ball::getActive(){
