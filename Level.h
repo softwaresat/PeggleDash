@@ -6,22 +6,18 @@
 
 #include <cstdint>
 #include "GameObject.h"
-#include "Peg.h"  // for Peg
 
-struct Level {
+struct Level: public GameObject {
 public:
-    GameObject levelMap[MAP_HEIGHT][MAP_WIDTH];
-    Peg* pegs[MAP_HEIGHT][MAP_WIDTH];  // peg pointers for this level
+    
     Level(uint8_t num);               // Constructor
-
-    void setImage(uint16_t *img);
+    const uint16_t* getImage();
     void setSound(unsigned char sound);
     ~Level();
 
 private:
     uint8_t levelNum;
-    uint16_t *image;
-    unsigned char sound; 
+    unsigned char sound;
 };
 
-#endif
+#endif 

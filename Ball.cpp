@@ -2,104 +2,177 @@
 #include "GameObject.h"
 #include <cstdint>
 #include <iostream>
-#include <cmath> // For more complex physics if needed, maybe not for simple reflect
 
-
-const int32_t angleTable[21][4] = {
-  {     0,  0,  128, -221 },
-  {  1536,  0,  150, -207 },
-  {  3072,  0,  171, -190 },
-  {  4864,  0,  190, -171 },
-  {  6400,  0,  207, -150 },
-  {  7936,  0,  221, -127 },
-  {  9728,  0,  233, -104 },
-  { 11264,  0,  243,  -79 },
-  { 12800,  0,  250,  -53 },
-  { 14592,  0,  254,  -26 },
-  { 16128,  0,  256,    0 },
-  { 17664,  0,  254,   26 },
-  { 19456,  0,  250,   53 },
-  { 20992,  0,  243,   79 },
-  { 22528,  0,  233,  104 },
-  { 24320,  0,  221,  127 },
-  { 25856,  0,  207,  150 },
-  { 27392,  0,  190,  171 },
-  { 29184,  0,  171,  190 },
-  { 30720,  0,  150,  207 },
-  { 32512,  0,  128,  221 },
+const int32_t angleTable[256][2] = {
+    { 1024,    0}, { 1024,   25}, { 1023,   50}, { 1021,   75}, { 1019,  100}, { 1016,  125}, { 1013,  150}, { 1009,  175},
+    { 1004,  200}, {  999,  224}, {  993,  249}, {  987,  273}, {  980,  297}, {  972,  321}, {  964,  345}, {  955,  369},
+    {  946,  392}, {  936,  415}, {  926,  438}, {  915,  460}, {  903,  483}, {  891,  505}, {  878,  526}, {  865,  548},
+    {  851,  569}, {  837,  590}, {  822,  610}, {  807,  630}, {  792,  650}, {  775,  669}, {  759,  688}, {  742,  706},
+    {  724,  724}, {  706,  742}, {  688,  759}, {  669,  775}, {  650,  792}, {  630,  807}, {  610,  822}, {  590,  837},
+    {  569,  851}, {  548,  865}, {  526,  878}, {  505,  891}, {  483,  903}, {  460,  915}, {  438,  926}, {  415,  936},
+    {  392,  946}, {  369,  955}, {  345,  964}, {  321,  972}, {  297,  980}, {  273,  987}, {  249,  993}, {  224,  999},
+    {  200, 1004}, {  175, 1009}, {  150, 1013}, {  125, 1016}, {  100, 1019}, {   75, 1021}, {   50, 1023}, {   25, 1024},
+    {   0, 1024}, {  -25, 1024}, {  -50, 1023}, {  -75, 1021}, {-100, 1019}, {-125, 1016}, {-150, 1013}, {-175, 1009},
+    {-200, 1004}, {-224,  999}, {-249,  993}, {-273,  987}, {-297,  980}, {-321,  972}, {-345,  964}, {-369,  955},
+    {-392,  946}, {-415,  936}, {-438,  926}, {-460,  915}, {-483,  903}, {-505,  891}, {-526,  878}, {-548,  865},
+    {-569,  851}, {-590,  837}, {-610,  822}, {-630,  807}, {-650,  792}, {-669,  775}, {-688,  759}, {-706,  742},
+    {-724,  724}, {-742,  706}, {-759,  688}, {-775,  669}, {-792,  650}, {-807,  630}, {-822,  610}, {-837,  590},
+    {-851,  569}, {-865,  548}, {-878,  526}, {-891,  505}, {-903,  483}, {-915,  460}, {-926,  438}, {-936,  415},
+    {-946,  392}, {-955,  369}, {-964,  345}, {-972,  321}, {-980,  297}, {-987,  273}, {-993,  249}, {-999,  224},
+    {-1004,  200}, {-1009,  175}, {-1013,  150}, {-1016,  125}, {-1019,  100}, {-1021,   75}, {-1023,   50}, {-1024,   25},
+    {-1024,    0}, {-1024,  -25}, {-1023,  -50}, {-1021,  -75}, {-1019, -100}, {-1016, -125}, {-1013, -150}, {-1009, -175},
+    {-1004, -200}, {-999, -224}, {-993, -249}, {-987, -273}, {-980, -297}, {-972, -321}, {-964, -345}, {-955, -369},
+    {-946, -392}, {-936, -415}, {-926, -438}, {-915, -460}, {-903, -483}, {-891, -505}, {-878, -526}, {-865, -548},
+    {-851, -569}, {-837, -590}, {-822, -610}, {-807, -630}, {-792, -650}, {-775, -669}, {-759, -688}, {-742, -706},
+    {-724, -724}, {-706, -742}, {-688, -759}, {-669, -775}, {-650, -792}, {-630, -807}, {-610, -822}, {-590, -837},
+    {-569, -851}, {-548, -865}, {-526, -878}, {-505, -891}, {-483, -903}, {-460, -915}, {-438, -926}, {-415, -936},
+    {-392, -946}, {-369, -955}, {-345, -964}, {-321, -972}, {-297, -980}, {-273, -987}, {-249, -993}, {-224, -999},
+    {-200, -1004}, {-175, -1009}, {-150, -1013}, {-125, -1016}, {-100, -1019}, { -75, -1021}, { -50, -1023}, { -25, -1024},
+    {   0, -1024}, {  25, -1024}, {  50, -1023}, {  75, -1021}, { 100, -1019}, { 125, -1016}, { 150, -1013}, { 175, -1009},
+    { 200, -1004}, { 224, -999}, { 249, -993}, { 273, -987}, { 297, -980}, { 321, -972}, { 345, -964}, { 369, -955},
+    { 392, -946}, { 415, -936}, { 438, -926}, { 460, -915}, { 483, -903}, { 505, -891}, { 526, -878}, { 548, -865},
+    { 569, -851}, { 590, -837}, { 610, -822}, { 630, -807}, { 650, -792}, { 669, -775}, { 688, -759}, { 706, -742},
+    { 724, -724}, { 742, -706}, { 759, -688}, { 775, -669}, { 792, -650}, { 807, -630}, { 822, -610}, { 837, -590},
+    { 851, -569}, { 865, -548}, { 878, -526}, { 891, -505}, { 903, -483}, { 915, -460}, { 926, -438}, { 936, -415},
+    { 946, -392}, { 955, -369}, { 964, -345}, { 972, -321}, { 980, -297}, { 987, -273}, { 993, -249}, { 999, -224},
+    {1004, -200}, {1009, -175}, {1013, -150}, {1016, -125}, {1019, -100}, {1021,  -75}, {1023,  -50}, {1024,  -25}   
 };
 
-const uint16_t BallSprite[] = {
- 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
- 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x07ED, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
- 0x0000, 0x0000, 0x0000, 0x0000, 0xFB80, 0xF640, 0xE7E0, 0x97E0, 0x3FE0, 0x07E2, 0x1346, 0x0000, 0x079F, 0x0000, 0x0000, 0x0000,
- 0x0000, 0x0000, 0x0000, 0xF900, 0xFB80, 0xF640, 0xE7E0, 0x97E0, 0x3FE0, 0x07E2, 0x07ED, 0x07F6, 0x0000, 0x053F, 0x0000, 0x0000,
- 0x0000, 0x0000, 0xF805, 0xF900, 0xFB80, 0x0000, 0xE7E0, 0x97E0, 0x3FE0, 0x0000, 0x07ED, 0x07F6, 0x079F, 0x053F, 0x0000, 0x0000,
- 0x0000, 0xF80F, 0xF805, 0xF900, 0xFB80, 0xF640, 0xE7E0, 0x97E0, 0x3FE0, 0x07E2, 0x0000, 0x07F6, 0x079F, 0x0000, 0x029F, 0x0000,
- 0x0000, 0xF80F, 0xF805, 0x0000, 0xFB80, 0xF640, 0x0000, 0x0000, 0x0000, 0x07E2, 0x07ED, 0x0000, 0x079F, 0x053F, 0x029F, 0x0000,
- 0x0000, 0xF80F, 0xF805, 0xF900, 0xFB80, 0x0000, 0xE7E0, 0x97E0, 0x3FE0, 0x07E2, 0x07ED, 0x0000, 0x079F, 0x053F, 0x029F, 0x0000,
- 0x0000, 0xF80F, 0x0000, 0xF900, 0xFB80, 0x0000, 0xE7E0, 0x0000, 0x3FE0, 0x07E2, 0x07ED, 0x0000, 0x079F, 0x053F, 0x029F, 0x0000,
- 0x0000, 0xF80F, 0xF805, 0xF900, 0xFB80, 0x0000, 0xE7E0, 0x97E0, 0x3FE0, 0x07E2, 0x07ED, 0x1795, 0x079F, 0x0021, 0x029F, 0x0000,
- 0x0000, 0xF80F, 0xF805, 0xF920, 0xFB80, 0xF640, 0xE7E0, 0x97E0, 0x3FE0, 0x07E2, 0x0000, 0x07F6, 0x079F, 0x0000, 0x029F, 0x0000,
- 0x0000, 0xD8EF, 0xF805, 0x0000, 0xFB80, 0xF640, 0xE7E0, 0x0000, 0x0000, 0x2645, 0x07ED, 0x07F6, 0x0000, 0x053F, 0x0000, 0x0000,
- 0x0000, 0x0000, 0xF805, 0xF900, 0x0000, 0xF640, 0xE7E0, 0x97E0, 0x3FE0, 0x07E2, 0x07ED, 0x0020, 0x079F, 0x053F, 0x0000, 0x0000,
- 0x0000, 0x0000, 0x0000, 0xF900, 0xFB80, 0x0000, 0x0000, 0x97E0, 0x3FE0, 0x0000, 0x0000, 0x07F6, 0x079F, 0x0000, 0x0000, 0x0000,
- 0x0000, 0x0000, 0x0000, 0x0000, 0xDB83, 0xF640, 0xE7E0, 0x97E0, 0x3FE0, 0x07E2, 0x07ED, 0x0123, 0x0000, 0x0000, 0x0000, 0x0000,
- 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
-
+const unsigned short ball[] = {
+ 0x0020, 0x0020, 0x0000, 0x0000, 0x0000, 0x0000, 0x0020, 0x0020, 0x0020, 0x0000, 0x0841, 0x20E2, 0x20E3, 0x0861, 0x0000, 0x0020,
+ 0x0000, 0x0861, 0x4A07, 0x4A28, 0x41A6, 0x3165, 0x0861, 0x0000, 0x0000, 0x31A6, 0x6B8F, 0x634E, 0x528A, 0x41A6, 0x18C3, 0x0000,
+ 0x0000, 0x4229, 0xA5D9, 0x84D5, 0x634E, 0x4A48, 0x18C2, 0x0000, 0x0000, 0x10A3, 0xAE19, 0xA5FA, 0x6BAF, 0x4A48, 0x0841, 0x0000,
+ 0x0020, 0x0000, 0x10C3, 0x424A, 0x39C7, 0x1082, 0x0000, 0x0020, 0x0020, 0x0020, 0x0000, 0x0000, 0x0000, 0x0000, 0x0020, 0x0020,
 };
 
-
-uint16_t tableLength = 201;
-
-Ball::Ball(int32_t angle) 
+Ball::Ball(uint8_t angle) 
 {
-    int index = (angle * (20))/2000;
     active = false;
-    x = angleTable[index][0];
-    y = angleTable[index][1];
-    vx = angleTable[index][2];
-    vy = angleTable[index][3];
-    image = BallSprite;
-    h = 16;
-    w = 16;
+    x = 64 * 256;
+    y = 8 * 256;
+    vx = angleTable[angle][0];
+    vy = angleTable[angle][1]; 
+    image = ball;
+    h = 8;
+    w = 8;
 }
 
 void Ball::moveBall(){
-
+    vy += 48;
+    if (vy > 1536) {
+        vy = 1536;
+    }
 
     x += vx;
-    y -= vy;
-
-    if(x/256 >= 128 || x <= 0){
-        vx = -vx;
+    y += vy; 
+    if((x / 256) + 8 >= 128 || x <= 0){
+        vx = -((vx * 240) >> 8);
     }
-    if(y/256 >= 160 || y <= 0){
-        vy = -vy;
+    if((y / 256) + 8 >= 160 || y <= 0){
+        vy = -((vy * 240) >> 8);
     }
 }
 
-void Ball::reset(int32_t angle){
-    int index = (angle * (20))/2000;
+void Ball::reset(uint8_t angle){
     active = false;
-    x = angleTable[index][0];
-    y = angleTable[index][1];
-    vx = angleTable[index][2];
-    vy = angleTable[index][3];    
+    vx = angleTable[angle][0];
+    vy = angleTable[angle][1];    
 }
 
-void Ball::simpleReflect() {
-    // Very basic reflection: just reverse both velocity components.
-    // This isn't physically accurate for angled collisions but is simple.
-    // A better approach would determine the collision normal.
-    vx = -vx;
-    vy = -vy;
+void Ball::bounce(uint16_t objX, uint16_t objY) {
+    uint16_t ballX = x >> 8;
+    uint16_t ballY = y >> 8;
+    uint16_t pegX = objX >> 8;
+    uint16_t pegY = objY >> 8;
 
-    // Optional: Add a small push away from the collision point to prevent sticking
-    // This requires knowing the relative position of the ball and peg.
-    // Example: move ball one step back along the reversed velocity vector
-    // x += vx / 16; // Adjust divisor for desired push strength
-    // y += vy / 16;
+    int16_t dx = ballX - pegX;
+    int16_t dy = ballY - pegY;
+
+    // Normalize the collision vector
+    int32_t lengthSq = dx * dx + dy * dy;
+    if (lengthSq == 0) return;  // avoid div/zero
+
+    // Get unit normal (Q8.8 fixed-point)
+    int32_t len = isqrt(lengthSq);     // length in pixels
+    if (len == 0) len = 1;             // avoid div by zero
+    int32_t nx = (dx << 8) / len;      // normalize to Q8.8
+    int32_t ny = (dy << 8) / len;
+
+    // Reflect velocity around the normal
+    int32_t dot = (vx * nx + vy * ny) >> 8;  // projection of velocity on normal
+    vx = vx - 2 * ((dot * nx) >> 8);
+    vy = vy - 2 * ((dot * ny) >> 8);
+
+    vx = ((vx * 240) + 128) >> 8;
+    vy = ((vy * 240) + 128) >> 8;
+
+    // Clamp velocity
+    int32_t speedSq = vx * vx + vy * vy;
+    const int32_t maxSpeed = 1024; // 4 pixels/frame
+    if (speedSq > (maxSpeed * maxSpeed)) {
+        int32_t scale = (maxSpeed << 8) / isqrt(speedSq);
+        vx = (vx * scale) >> 8;
+        vy = (vy * scale) >> 8;
+    }
+
+    // Nudge to escape collision zone
+    x += (vx >> 6);
+    y += (vy >> 6);
+}
+
+
+int32_t Ball::isqrt(int32_t n) {
+    if (n <= 0) return 0;
+
+    int32_t res = 0;
+    int32_t bit = 1 << 30;  // Start from the highest power of 4 <= 2^30
+
+    while (bit > n) bit >>= 2;
+
+    while (bit != 0) {
+        if (n >= res + bit) {
+            n -= res + bit;
+            res = (res >> 1) + bit;
+        } else {
+            res >>= 1;
+        }
+        bit >>= 2;
+    }
+
+    return res;
+}
+
+int8_t Ball::angleToIndex() {
+    int bestIndex = 0;
+    int32_t bestDiff = INT32_MAX;
+
+    for (int i = 0; i < 256; i++) {
+        int32_t dx = vx - angleTable[i][0];
+        int32_t dy = vy - angleTable[i][1];
+        int32_t diff = dx * dx + dy * dy; // Euclidean distance squared
+
+        if (diff < bestDiff) {
+            bestDiff = diff;
+            bestIndex = i;
+        }
+    }
+
+    return bestIndex;
+}
+
+bool Ball::checkCollision(uint16_t objX, uint16_t objY) {
+    int32_t ballX = x >> 8;
+    int32_t ballY = y >> 8;
+    int32_t pegX = objX >> 8;
+    int32_t pegY = objY >> 8;
+
+    int32_t dx = ballX - pegX;
+    int32_t dy = ballY - pegY;
+
+    // Assume both are 8x8 => radius = 4
+    int32_t radiusSum = 3 + 3;
+
+    return (dx * dx + dy * dy < radiusSum * radiusSum);
 }
 
 bool Ball::getActive(){
@@ -108,6 +181,10 @@ bool Ball::getActive(){
 
 void Ball::setActive(){
     active = true;
+}
+
+void Ball::IncrementVY(){
+    vy += 256;
 }
 
 int32_t Ball::getX(){

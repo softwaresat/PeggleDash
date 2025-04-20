@@ -4,25 +4,20 @@
 #include <cstdint>
 #include "GameObject.h"
 
-extern const unsigned short bluepeg[];
-extern const unsigned short orangepeg[];
-extern const unsigned short bluepeghit[];
-extern const unsigned short orangepeghit[];
-
 struct Peg: public GameObject {
 public:
-    int32_t hits;
-    int16_t prevScreenX; // Previous screen X coordinate for drawing
-    int16_t prevScreenY; // Previous screen Y coordinate for drawing
-    bool needsRedraw;    // Flag to indicate if the peg needs to be redrawn
-
-    Peg(int32_t x, int32_t y, int32_t hits);              
-    ~Peg();
-    
+    Peg();              
+    ~Peg() = default;
+    void init(int16_t x, int16_t y, int8_t hits, int8_t color);
+    int16_t getX();
+    int16_t getY();
+    uint16_t getW();
+    uint16_t getH();
+    const uint16_t* getImage();
     void updatePeg();
 
 private:
-    
+    int8_t hits;
 };
 
-#endif
+#endif 

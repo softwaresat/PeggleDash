@@ -27,6 +27,7 @@
 #include "Hole.h"
 #include "Level.h"
 
+
 extern "C" void __disable_irq(void);
 extern "C" void __enable_irq(void);
 extern "C" void TIMG12_IRQHandler(void);
@@ -34,6 +35,7 @@ extern "C" void TIMG12_IRQHandler(void);
 #define BUTTON_RIGHT (1 << 1)  // PA16
 #define BUTTON_LEFT  (1 << 2)  // PA27
 #define BUTTON_UP    (1 << 3)  // PA28
+#define FIX 8
 
 // ****note to ECE319K students****
 // the data sheet says the ADC does not work when clock is 80 MHz
@@ -45,6 +47,12 @@ void PLL_Init(void){ // set phase lock loop (PLL)
 }
 
 uint32_t M=1;
+
+
+void SeedRandom(uint32_t seed) {
+  M = seed;
+}
+
 uint32_t Random32(void){
   M = 1664525*M+1013904223;
   return M;
@@ -56,107 +64,52 @@ uint32_t Random(uint32_t n){
 SlidePot Sensor(1500,0); // copy calibration from Lab 7
 uint32_t data;
 uint32_t input;
-Ball* currBall =  new Ball(28);
+Ball* currBall =  new Ball(192);
 Hole* movingHole = new Hole();
+int8_t levelSelect = 1;
+Peg pegs[25];
+int8_t pegCount = 0;
+int8_t indexAngle;
 
-// Define the level background to use (0=random pegs only, 1=level1 background, 2=level2 background)
-#define LEVEL_BACKGROUND 1  // Change this value to select different backgrounds
-
-Level currentLevel(LEVEL_BACKGROUND); // Create level with the selected background
-volatile uint8_t TimerFlag = 0;  // signal for main display update
-
-const uint16_t BlackCoverSprite[256] = {
- 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
- 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
- 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
- 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
- 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
- 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
- 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
- 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
- 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
- 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
- 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
- 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
- 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
- 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
- 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
- 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000
+const uint16_t BlackCoverSprite[64] = {
+ 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
+ 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
+ 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
+ 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 
+ 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 
+ 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 
+ 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 
+ 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 
 };
 
-// games engine runs at 30Hz
-void TIMG12_IRQHandler(void){
+
+// games  engine runs at 30Hz
+void TIMG12_IRQHandler(void){uint32_t pos,msg;
   if((TIMG12->CPU_INT.IIDX) == 1){ // this will acknowledge
     GPIOB->DOUTTGL31_0 = GREEN; // toggle PB27 (minimally intrusive debugging)
     GPIOB->DOUTTGL31_0 = GREEN; // toggle PB27 (minimally intrusive debugging)
-
+// game engine goes 
     data = Sensor.In();
-    data = Sensor.Convert(data);
     input = Switch_In();
-
-    movingHole->moveHole(); // Assuming hole movement is independent of level pegs
-
-    if(!currBall->getActive()){
-      currBall->reset(data);
-    }
-
-    if(!currBall->getActive() && (input & BUTTON_DOWN) == BUTTON_DOWN){
-      currBall->setActive();
-    } else if(currBall->getActive()){
-      currBall->moveBall();
-
-      // Check for collisions with pegs in the current level
-      for (int y = 0; y < MAP_HEIGHT; ++y) {
-          for (int x = 0; x < MAP_WIDTH; ++x) {
-              Peg* peg = currentLevel.pegs[y][x];
-              if (peg != nullptr && peg->hits > 0) { // Only check active pegs
-                  // Basic AABB collision detection (replace with circle collision if needed)
-                  int32_t ballX = currBall->getX(); // Use fixed-point values
-                  int32_t ballY = currBall->getY();
-                  // Assuming Ball getW/getH return pixel size, convert to fixed-point if needed
-                  int32_t ballW = currBall->getW() * 256; 
-                  int32_t ballH = currBall->getH() * 256;
-                  int32_t pegX = peg->x; // Assuming Peg stores fixed-point coords
-                  int32_t pegY = peg->y;
-                  int32_t pegW = peg->getW() * 256;
-                  int32_t pegH = peg->getH() * 256;
-
-                  // Simple AABB check (adjust logic for circle collision)
-                  if (ballX < pegX + pegW &&
-                      ballX + ballW > pegX &&
-                      ballY < pegY + pegH &&
-                      ballY + ballH > pegY) {
-
-                      // Collision detected!
-                      peg->hits--; // Decrement hit count
-                      // Sound_Play(pegHitSound); // Play peg hit sound
-                      peg->updatePeg(); // Update image based on hits remaining
-
-                      // Reverse ball velocity (simple reflection, needs Ball modification)
-                      // currBall->reflectVelocity(peg); // Placeholder for reflection logic
-                      currBall->simpleReflect(); // Add a simple reflection for now
-
-                      peg->needsRedraw = true; // Mark peg for redraw in main loop
-
-                      // Optional: Break if ball can only hit one peg per frame
-                      // goto collision_handled; 
-                  }
-              }
-          }
+    movingHole->moveHole();
+    for (int i = 0; i < pegCount; i++) {
+      if (currBall->checkCollision(pegs[i].getX(), pegs[i].getY())) {
+        currBall->bounce(pegs[i].getX(), pegs[i].getY());
+        //indexAngle = currBall->angleToIndex();
+        break;
       }
-      // collision_handled:; // Label for goto if used
-
-      // Add collision checks for hole, boundaries etc. here
-      // ...
     }
-
-    // signal main loop to update LCD (no LCD output in ISR)
-    TimerFlag = 1;
-
+    //currBall->reset(indexAngle);
+    currBall->moveBall();
+    // 1) sample slide pot
+    // 2) read input switches
+    // 3) move sprites
+    // 4) start sounds
+    // 5) set semaphore
+    // NO LCD OUTPUT IN INTERRUPT SERVICE ROUTINES
     GPIOB->DOUTTGL31_0 = GREEN; // toggle PB27 (minimally intrusive debugging)
   }
 }
-
 uint8_t TExaS_LaunchPadLogicPB27PB26(void){
   return (0x80|((GPIOB->DOUT31_0>>26)&0x03));
 }
@@ -187,7 +140,7 @@ int main1(void){ // main1
   __disable_irq();
   PLL_Init(); // set bus speed
   LaunchPad_Init();
-  ST7735_InitPrintf(INITR_BLACKTAB);
+  ST7735_InitPrintf(INITR_REDTAB);
   ST7735_FillScreen(0x0000);            // set screen to black
   for(int myPhrase=0; myPhrase<= 2; myPhrase++){
     for(int myL=0; myL<= 3; myL++){
@@ -221,7 +174,7 @@ int main2(void){ // main2
   __disable_irq();
   PLL_Init(); // set bus speed
   LaunchPad_Init();
-  ST7735_InitPrintf(INITR_BLACKTAB);
+  ST7735_InitPrintf(INITR_REDTAB);
     //note: if you colors are weird, see different options for
     // ST7735_InitR(INITR_REDTAB); inside ST7735_InitPrintf()
   ST7735_FillScreen(ST7735_BLACK);
@@ -261,7 +214,7 @@ int main3(void){ // main3
   Switch_Init(); // initialize switches
   LED_Init(); // initialize LED
   while(1){
-    ST7735_InitPrintf(INITR_BLACKTAB);
+    ST7735_InitPrintf(INITR_REDTAB);
     //note: if you colors are weird, see different options for
     // ST7735_InitR(INITR_REDTAB); inside ST7735_InitPrintf()
   ST7735_FillScreen(ST7735_BLACK);
@@ -306,7 +259,7 @@ int main(void){ // final main
   __disable_irq();
   PLL_Init(); // set bus speed
   LaunchPad_Init();
-  ST7735_InitPrintf(INITR_BLACKTAB);
+  ST7735_InitPrintf(INITR_REDTAB);
     //note: if you colors are weird, see different options for
     // ST7735_InitR(INITR_REDTAB); inside ST7735_InitPrintf()
   ST7735_FillScreen(ST7735_BLACK);
@@ -320,111 +273,44 @@ int main(void){ // final main
   TimerG12_IntArm(2666667, 2);
   // initialize all data structures
   __enable_irq();
+
   
-  // Draw the background first
-  if (LEVEL_BACKGROUND == 1 || LEVEL_BACKGROUND == 2) {
-    // Get the appropriate background data array
-    const unsigned short* backgroundData = nullptr;
-    if (LEVEL_BACKGROUND == 1) {
-      backgroundData = level1; // Use level1 background data
-    } else if (LEVEL_BACKGROUND == 2) {
-      backgroundData = level2; // Use level2 background data
-    }
-    
-    // Draw the background
-    if (backgroundData != nullptr) {
-      // Draw the background tile by tile
-      for (int y = 0; y < MAP_HEIGHT; y++) {
-        for (int x = 0; x < MAP_WIDTH; x++) {
-          // Get the color value from the level data
-          unsigned short color = backgroundData[y * MAP_WIDTH + x];
-          
-          // Calculate screen position for this tile
-          int screenX = x * 16; // Using TILE_SIZE which is 16
-          int screenY = y * 16;
-          
-          // Fill a 16x16 tile with the color
-          ST7735_FillRect(screenX, screenY, 16, 16, color);
-        }
+  //Prompt user for level select
+  //if (levelSelect == 1) {
+  Level* level = new Level(1);
+  //} else {
+  // Level* level = new Level(2);
+  //}
+  ST7735_DrawBitmap(0, 160, level->getImage(), 128, 160);
+  int x = 0;
+  int y = 0;
+  bool found;
+  SeedRandom(TIMG12->COUNTERREGS.CTR);
+   while (pegCount < 25) {
+    found = false;
+    x = Random(113) + 4;
+    y = Random(113) + 24;
+    for (int i = 0; i < pegCount; i++) {
+      if (((x - (pegs[i].getX() >> FIX)) < 16 && (x - (pegs[i].getX() >> FIX)) > -16) && ((y - (pegs[i].getY() >> FIX)) < 16 && (y - (pegs[i].getY() >> FIX)) > -16)) {
+        found = true;
+        break;
       }
+    }
+    if (!found) {
+      pegs[pegCount].init(x*256, y*256, 0, Random(3));
+      pegCount++;
     }
   }
-  
-  // Now draw the pegs over the background
-  // Draw Pegs from the level
-  for (int y = 0; y < MAP_HEIGHT; ++y) {
-      for (int x = 0; x < MAP_WIDTH; ++x) {
-          Peg* peg = currentLevel.pegs[y][x];
-          if (peg != nullptr) {
-              // Convert fixed-point coordinates to screen coordinates
-              int16_t screenX = (int16_t)(peg->x / 256);
-              int16_t screenY = (int16_t)(peg->y / 256);
-              ST7735_DrawBitmap(screenX, screenY, peg->getImage(), peg->getW(), peg->getH());
-              peg->prevScreenX = screenX; // Store initial screen position
-              peg->prevScreenY = screenY;
-              peg->needsRedraw = false; // Initialize redraw flag
-          }
-      }
+  for (int i = 0; i < pegCount; i++) {
+    ST7735_DrawBitmap(pegs[i].getX() >> FIX, pegs[i].getY() >> FIX, pegs[i].getImage(), 8, 8);
   }
-
-  // Draw initial hole and ball
-  ST7735_DrawBitmap((int16_t)(movingHole->getX()/256), (int16_t)(movingHole->getY()/256)-10, movingHole->getImage(), 16,16);
-  int16_t prevHoleX = (int16_t)(movingHole->getX()/256);
-  int16_t prevHoleY = (int16_t)(movingHole->getY()/256)-10;
-  int16_t prevBallX = (int16_t)(currBall->getX()/256);
-  int16_t prevBallY = (int16_t)(currBall->getY()/256) + (currBall->getActive()?0:10);
-  ST7735_DrawBitmap(prevBallX, prevBallY, currBall->getImage(), currBall->getW(), currBall->getH());
-
-  while(1){
-    if(TimerFlag){
-      TimerFlag = 0;
-
-      // Erase previous sprites
-      ST7735_DrawBitmap(prevHoleX, prevHoleY, BlackCoverSprite, 16,16);
-      ST7735_DrawBitmap(prevBallX, prevBallY, BlackCoverSprite, currBall->getW(), currBall->getH()); // Use ball's actual W/H
-
-      // Redraw pegs that have changed state
-      for (int y = 0; y < MAP_HEIGHT; ++y) {
-          for (int x = 0; x < MAP_WIDTH; ++x) {
-              Peg* peg = currentLevel.pegs[y][x];
-              // Check if peg exists and needs redraw
-              if (peg != nullptr && peg->needsRedraw) {
-                  // Erase previous peg image
-                  ST7735_DrawBitmap(peg->prevScreenX, peg->prevScreenY, BlackCoverSprite, peg->getW(), peg->getH());
-
-                  if (peg->hits > 0) {
-                      // Draw updated peg image at current position (pegs don't move)
-                      int16_t screenX = (int16_t)(peg->x / 256);
-                      int16_t screenY = (int16_t)(peg->y / 256);
-                      ST7735_DrawBitmap(screenX, screenY, peg->getImage(), peg->getW(), peg->getH());
-                      // Update previous coords (though pegs don't move, good practice if they could)
-                      peg->prevScreenX = screenX; 
-                      peg->prevScreenY = screenY;
-                  }
-                  // Else: Peg is destroyed (hits <= 0), already erased, do nothing more.
-                  
-                  peg->needsRedraw = false; // Reset flag
-              }
-          }
-      }
-
-      // Draw new hole sprite
-      int16_t holeX = (int16_t)(movingHole->getX()/256);
-      int16_t holeY = (int16_t)(movingHole->getY()/256)-10;
-      ST7735_DrawBitmap(holeX, holeY, movingHole->getImage(), 16,16);
-
-      // Draw new ball sprite
-      int16_t ballX = (int16_t)(currBall->getX()/256);
-      // Adjust Y based on active state (launcher vs moving)
-      int16_t ballY = (int16_t)(currBall->getY()/256) + (currBall->getActive()?0:10);
-      ST7735_DrawBitmap(ballX, ballY, currBall->getImage(), currBall->getW(), currBall->getH());
-
-      // Update previous coordinates
-      prevHoleX = holeX; prevHoleY = holeY;
-      prevBallX = ballX; prevBallY = ballY;
-    }
-    // Add a small delay or wait for interrupt flag if CPU usage is too high
-    // Clock_Delay1ms(1); // Example small delay
+while(1){
+    data = Sensor.Convert(data);
+    ST7735_DrawBitmap(currBall->getX() >> FIX, currBall->getY() >> FIX, currBall->getImage(), 8, 8);
+    ST7735_DrawBitmap(movingHole->getX() >> FIX, movingHole->getY() >> FIX, movingHole->getImage(), 48, 24);
+    // wait for semaphore
+       // clear semaphore
+       // update ST7735R
+    // check for end game or level switch
   }
 }
-
