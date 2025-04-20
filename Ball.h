@@ -21,6 +21,7 @@ public:
 
     void moveBall();
     void destroyBall();      // Example method
+    void simpleReflect();    // Add simple reflection method
 
 private:
     int32_t vx = 0, vy = 0; // Velocity
@@ -30,4 +31,4 @@ private:
     int32_t angleToIndex(int32_t angle);
 };
 
-#endif 
+#endif

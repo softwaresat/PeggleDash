@@ -39,8 +39,8 @@ const unsigned short bluepeghit[] = {
  0x0000, 0x0000, 0x0000, 0x38A0, 0xF522, 0xFFB1, 0xFFB6, 0xFF2D, 0xFF2C, 0xFF09, 0xFEC5, 0xECA1, 0x3060, 0x0000, 0x0000, 0x0000,
  0x0000, 0x0000, 0x0000, 0x0000, 0x40A0, 0xD401, 0xFE45, 0xFEC6, 0xFEA5, 0xFE03, 0xD3C1, 0x38A0, 0x0000, 0x0000, 0x0000, 0x0000,
  0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0800, 0x5100, 0x8200, 0x8200, 0x5100, 0x0800, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
- 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
  0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0820, 0x0820, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
+ 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 };
 
 const unsigned short orangepeg[] = {
@@ -81,16 +81,38 @@ const unsigned short orangepeghit[] = {
  0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 };
 
-
-
-
-Peg::Peg(int32_t x, int32_t y, int32_t hits) {
-    this->x = x;
-    this->y = y;
-    this->hits = hits;
+Peg::Peg(int32_t x_pos, int32_t y_pos, int32_t initial_hits) : 
+    GameObject(x_pos, y_pos, 16, 16, nullptr), 
+    hits(initial_hits),
+    prevScreenX(0),
+    prevScreenY(0),
+    needsRedraw(false) {
+    
+    // Set initial image based on hits
+    updatePeg();
 }
 
-void Peg::updatePeg(){
-    hits--;
-    // Update color of peg accordingly
+Peg::~Peg() {
+    // Destructor for Peg (empty as we don't allocate additional resources)
+}
+
+void Peg::updatePeg() {
+    if (hits <= 0) {
+        // Peg is destroyed
+        image = nullptr;
+        // Optionally set width/height to 0 if it should disappear completely
+        w = 0;
+        h = 0;
+    } else if (hits == 1) {
+        // Blue peg (1 hit left)
+        image = bluepeg;
+    } else if (hits == 2) {
+        // Orange peg (2 hits left)
+        image = orangepeg;
+    } else if (hits == 3) {
+        // Special case for pegs with more than 2 hits (if implemented)
+        image = orangepeg; // Use orange for now
+    }
+    
+    needsRedraw = true; // Mark for redraw whenever state changes
 }

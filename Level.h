@@ -6,11 +6,12 @@
 
 #include <cstdint>
 #include "GameObject.h"
+#include "Peg.h"  // for Peg
 
 struct Level {
 public:
-    
     GameObject levelMap[MAP_HEIGHT][MAP_WIDTH];
+    Peg* pegs[MAP_HEIGHT][MAP_WIDTH];  // peg pointers for this level
     Level(uint8_t num);               // Constructor
 
     void setImage(uint16_t *img);
@@ -23,4 +24,4 @@ private:
     unsigned char sound; 
 };
 
-#endif 
+#endif
