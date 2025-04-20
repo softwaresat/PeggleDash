@@ -45,9 +45,8 @@ const unsigned short ball[] = {
  0x0020, 0x0000, 0x10C3, 0x424A, 0x39C7, 0x1082, 0x0000, 0x0020, 0x0020, 0x0020, 0x0000, 0x0000, 0x0000, 0x0000, 0x0020, 0x0020,
 };
 
-Ball::Ball(int32_t angle) 
+Ball::Ball(uint8_t angle) 
 {
-    counter = 0;
     active = false;
     x = 64 * 256;
     y = 8 * 256;
@@ -74,25 +73,73 @@ void Ball::moveBall(){
     }
 }
 
-void Ball::reset(int32_t angle){
+void Ball::reset(uint8_t angle){
     active = false;
     vx = angleTable[angle][0];
     vy = angleTable[angle][1];    
 }
 
 void Ball::bounce(uint16_t objX, uint16_t objY) {
-    bool overlapX = ((x >> 8) + 8 >= (objX >> 8)) && (x >> 8) <= (objX >> 8) + 8;
-    bool overlapY = ((y >> 8) >= (objY >> 8) - 8 && (y >> 8) - 8 <= objY >> 8);
+    uint16_t ballX = x >> 8;
+    uint16_t ballY = y >> 8;
+    uint16_t pegX = objX >> 8;
+    uint16_t pegY = objY >> 8;
 
-    if (overlapX && overlapY) {
-        vx = -vx;
-        vy = -vy;
-    } else if (overlapX) {
-        vx = -vx;
-    } else {
-        vy = -vy;
+    int16_t dx = ballX - pegX;
+    int16_t dy = ballY - pegY;
+
+    // Normalize the collision vector
+    int32_t lengthSq = dx * dx + dy * dy;
+    if (lengthSq == 0) return;  // avoid div/zero
+
+    // Get unit normal (Q8.8 fixed-point)
+    int32_t len = isqrt(lengthSq);     // length in pixels
+    if (len == 0) len = 1;             // avoid div by zero
+    int32_t nx = (dx << 8) / len;      // normalize to Q8.8
+    int32_t ny = (dy << 8) / len;
+
+    // Reflect velocity around the normal
+    int32_t dot = (vx * nx + vy * ny) >> 8;  // projection of velocity on normal
+    vx = vx - 2 * ((dot * nx) >> 8);
+    vy = vy - 2 * ((dot * ny) >> 8);
+
+    vx = ((vx * 240) + 128) >> 8;
+    vy = ((vy * 240) + 128) >> 8;
+
+    // Clamp velocity
+    int32_t speedSq = vx * vx + vy * vy;
+    const int32_t maxSpeed = 1024; // 4 pixels/frame
+    if (speedSq > (maxSpeed * maxSpeed)) {
+        int32_t scale = (maxSpeed << 8) / isqrt(speedSq);
+        vx = (vx * scale) >> 8;
+        vy = (vy * scale) >> 8;
     }
 
+    // Nudge to escape collision zone
+    x += (vx >> 6);
+    y += (vy >> 6);
+}
+
+
+int32_t Ball::isqrt(int32_t n) {
+    if (n <= 0) return 0;
+
+    int32_t res = 0;
+    int32_t bit = 1 << 30;  // Start from the highest power of 4 <= 2^30
+
+    while (bit > n) bit >>= 2;
+
+    while (bit != 0) {
+        if (n >= res + bit) {
+            n -= res + bit;
+            res = (res >> 1) + bit;
+        } else {
+            res >>= 1;
+        }
+        bit >>= 2;
+    }
+
+    return res;
 }
 
 int8_t Ball::angleToIndex() {
@@ -113,19 +160,19 @@ int8_t Ball::angleToIndex() {
     return bestIndex;
 }
 
-bool Ball::checkCollision(uint16_t objX, uint16_t objY, uint16_t objW, uint16_t objH) {
-    int ballLeft   = x >> 8;
-    int ballBottom    = y >> 8;
-    int ballRight  = ballLeft + w;
-    int ballTop = ballTop - h;
+bool Ball::checkCollision(uint16_t objX, uint16_t objY) {
+    int32_t ballX = x >> 8;
+    int32_t ballY = y >> 8;
+    int32_t pegX = objX >> 8;
+    int32_t pegY = objY >> 8;
 
-    int objRight = (objX >> 8) + objW;
-    int objTop = (objY >> 8) - objH;
+    int32_t dx = ballX - pegX;
+    int32_t dy = ballY - pegY;
 
-    return !(ballRight  < (objX >> 8) ||
-             ballLeft   > objRight ||
-             ballTop < (objY >> 8) ||
-             ballBottom > objTop);
+    // Assume both are 8x8 => radius = 4
+    int32_t radiusSum = 3 + 3;
+
+    return (dx * dx + dy * dy < radiusSum * radiusSum);
 }
 
 bool Ball::getActive(){
@@ -138,14 +185,6 @@ void Ball::setActive(){
 
 void Ball::IncrementVY(){
     vy += 256;
-}
-
-void Ball::setCounter(int8_t val){
-    counter = val;
-}
-
-int8_t Ball::getCounter(){
-    return counter;
 }
 
 int32_t Ball::getX(){

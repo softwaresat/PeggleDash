@@ -35,7 +35,7 @@ extern "C" void TIMG12_IRQHandler(void);
 #define BUTTON_RIGHT (1 << 1)  // PA16
 #define BUTTON_LEFT  (1 << 2)  // PA27
 #define BUTTON_UP    (1 << 3)  // PA28
-#define FIX 256
+#define FIX 8
 
 // ****note to ECE319K students****
 // the data sheet says the ADC does not work when clock is 80 MHz
@@ -47,6 +47,12 @@ void PLL_Init(void){ // set phase lock loop (PLL)
 }
 
 uint32_t M=1;
+
+
+void SeedRandom(uint32_t seed) {
+  M = seed;
+}
+
 uint32_t Random32(void){
   M = 1664525*M+1013904223;
   return M;
@@ -58,10 +64,10 @@ uint32_t Random(uint32_t n){
 SlidePot Sensor(1500,0); // copy calibration from Lab 7
 uint32_t data;
 uint32_t input;
-Ball* currBall =  new Ball(0);
+Ball* currBall =  new Ball(192);
 Hole* movingHole = new Hole();
 int8_t levelSelect = 1;
-Peg* pegs[10];
+Peg pegs[25];
 int8_t pegCount = 0;
 int8_t indexAngle;
 
@@ -87,13 +93,13 @@ void TIMG12_IRQHandler(void){uint32_t pos,msg;
     input = Switch_In();
     movingHole->moveHole();
     for (int i = 0; i < pegCount; i++) {
-      if (currBall->checkCollision(pegs[i]->getX(), pegs[i]->getY(), pegs[i]->getW(), pegs[i]->getH())) {
-        currBall->bounce(pegs[i]->getX(), pegs[i]->getY());
-        indexAngle = currBall->angleToIndex();
-        currBall->reset(indexAngle);
+      if (currBall->checkCollision(pegs[i].getX(), pegs[i].getY())) {
+        currBall->bounce(pegs[i].getX(), pegs[i].getY());
+        //indexAngle = currBall->angleToIndex();
         break;
       }
     }
+    //currBall->reset(indexAngle);
     currBall->moveBall();
     // 1) sample slide pot
     // 2) read input switches
@@ -279,29 +285,29 @@ int main(void){ // final main
   int x = 0;
   int y = 0;
   bool found;
-   while (pegCount < 10) {
-    M = Random(100);
+  SeedRandom(TIMG12->COUNTERREGS.CTR);
+   while (pegCount < 25) {
     found = false;
-    x = Random(105) + 8;
-    y = Random(101) + 36;
+    x = Random(113) + 4;
+    y = Random(113) + 24;
     for (int i = 0; i < pegCount; i++) {
-      if (((x - (pegs[i]->getX()/256)) < 16 && (x - (pegs[i]->getX()/256)) > -16) && ((y - (pegs[i]->getY()/256)) < 16 && (y - (pegs[i]->getY()/256)) > -16)) {
+      if (((x - (pegs[i].getX() >> FIX)) < 16 && (x - (pegs[i].getX() >> FIX)) > -16) && ((y - (pegs[i].getY() >> FIX)) < 16 && (y - (pegs[i].getY() >> FIX)) > -16)) {
         found = true;
         break;
       }
     }
     if (!found) {
-      pegs[pegCount] = new Peg(x*256, y*256, 0, Random(3));
+      pegs[pegCount].init(x*256, y*256, 0, Random(3));
       pegCount++;
     }
   }
   for (int i = 0; i < pegCount; i++) {
-    ST7735_DrawBitmap(pegs[i]->getX()/FIX, pegs[i]->getY()/FIX, pegs[i]->getImage(), 8, 8);
+    ST7735_DrawBitmap(pegs[i].getX() >> FIX, pegs[i].getY() >> FIX, pegs[i].getImage(), 8, 8);
   }
 while(1){
     data = Sensor.Convert(data);
-    ST7735_DrawBitmap(currBall->getX()/FIX, currBall->getY()/FIX, currBall->getImage(), 8, 8);
-    ST7735_DrawBitmap(movingHole->getX()/FIX, movingHole->getY()/FIX, movingHole->getImage(), 48, 24);
+    ST7735_DrawBitmap(currBall->getX() >> FIX, currBall->getY() >> FIX, currBall->getImage(), 8, 8);
+    ST7735_DrawBitmap(movingHole->getX() >> FIX, movingHole->getY() >> FIX, movingHole->getImage(), 48, 24);
     // wait for semaphore
        // clear semaphore
        // update ST7735R
