@@ -1292,7 +1292,9 @@ Level::Level(uint8_t num){
     y = 0;
     w = 128;
     h = 160;
-    image = level1;
+    if (num == 1) {
+        image = level1;
+    }
 }
 
 void Level::setSound(unsigned char sound){

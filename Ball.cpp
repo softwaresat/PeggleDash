@@ -51,29 +51,81 @@ Ball::Ball(int32_t angle)
     active = false;
     x = 64 * 256;
     y = 8 * 256;
-    vx = angleTable[220][0];
-    vy = angleTable[220][1]; 
+    vx = angleTable[angle][0];
+    vy = angleTable[angle][1]; 
     image = ball;
     h = 8;
     w = 8;
 }
 
 void Ball::moveBall(){
+    vy += 48;
+    if (vy > 1536) {
+        vy = 1536;
+    }
 
-    x += vx; 
+    x += vx;
     y += vy; 
     if((x / 256) + 8 >= 128 || x <= 0){
-        vx = -vx;
+        vx = -((vx * 240) >> 8);
     }
     if((y / 256) + 8 >= 160 || y <= 0){
-        vy = -vy;
+        vy = -((vy * 240) >> 8);
     }
 }
 
 void Ball::reset(int32_t angle){
     active = false;
-    vx = angleTable[    ][0] / 256;
-    vy = angleTable[index][1] / 256;    
+    vx = angleTable[angle][0];
+    vy = angleTable[angle][1];    
+}
+
+void Ball::bounce(uint16_t objX, uint16_t objY) {
+    bool overlapX = ((x >> 8) + 8 >= (objX >> 8)) && (x >> 8) <= (objX >> 8) + 8;
+    bool overlapY = ((y >> 8) >= (objY >> 8) - 8 && (y >> 8) - 8 <= objY >> 8);
+
+    if (overlapX && overlapY) {
+        vx = -vx;
+        vy = -vy;
+    } else if (overlapX) {
+        vx = -vx;
+    } else {
+        vy = -vy;
+    }
+
+}
+
+int8_t Ball::angleToIndex() {
+    int bestIndex = 0;
+    int32_t bestDiff = INT32_MAX;
+
+    for (int i = 0; i < 256; i++) {
+        int32_t dx = vx - angleTable[i][0];
+        int32_t dy = vy - angleTable[i][1];
+        int32_t diff = dx * dx + dy * dy; // Euclidean distance squared
+
+        if (diff < bestDiff) {
+            bestDiff = diff;
+            bestIndex = i;
+        }
+    }
+
+    return bestIndex;
+}
+
+bool Ball::checkCollision(uint16_t objX, uint16_t objY, uint16_t objW, uint16_t objH) {
+    int ballLeft   = x >> 8;
+    int ballBottom    = y >> 8;
+    int ballRight  = ballLeft + w;
+    int ballTop = ballTop - h;
+
+    int objRight = (objX >> 8) + objW;
+    int objTop = (objY >> 8) - objH;
+
+    return !(ballRight  < (objX >> 8) ||
+             ballLeft   > objRight ||
+             ballTop < (objY >> 8) ||
+             ballBottom > objTop);
 }
 
 bool Ball::getActive(){

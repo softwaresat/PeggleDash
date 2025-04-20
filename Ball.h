@@ -21,17 +21,19 @@ public:
     void setCounter(int8_t val);
     void IncrementVY();
     const uint16_t* getImage();
-
+    bool checkCollision(uint16_t objX, uint16_t objY, uint16_t objW, uint16_t objH);
+    void bounce(uint16_t objX, uint16_t objY);
     void moveBall();
-    void destroyBall();      // Example method
+    void destroyBall();
+    int8_t angleToIndex();      // Example method
 
 private:
+    int8_t index;
     int8_t counter;
     int32_t vx = 0, vy = 0; // Velocity
     int32_t angle;
     bool active;
     uint16_t tableLength;
-    int32_t angleToIndex(int32_t angle);
 };
 
 #endif 

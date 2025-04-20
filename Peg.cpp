@@ -36,10 +36,38 @@ const unsigned short orangepeghit[] = {
 
 
 
-Peg::Peg(int32_t x, int32_t y, int32_t hits) {
+Peg::Peg(int32_t x, int32_t y, int32_t hits, int color) {
     this->x = x;
     this->y = y;
     this->hits = hits;
+    w = 8;
+    h = 8;
+    //redraw = false;
+    if(color == 1) {
+        image = orangepeg;
+    } else {
+        image = bluepeg;
+    }
+}
+
+int16_t Peg::getX(){
+    return x;
+}
+
+int16_t Peg::getY(){
+    return y;
+}
+
+uint16_t Peg::getW(){
+    return w;
+}
+
+uint16_t Peg::getH(){
+    return h;
+}
+
+const uint16_t* Peg::getImage(){
+    return image;
 }
 
 void Peg::updatePeg(){

@@ -60,7 +60,10 @@ uint32_t data;
 uint32_t input;
 Ball* currBall =  new Ball(0);
 Hole* movingHole = new Hole();
-Level* level = new Level(1);
+int8_t levelSelect = 1;
+Peg* pegs[10];
+int8_t pegCount = 0;
+int8_t indexAngle;
 
 const uint16_t BlackCoverSprite[64] = {
  0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -82,14 +85,15 @@ void TIMG12_IRQHandler(void){uint32_t pos,msg;
 // game engine goes 
     data = Sensor.In();
     input = Switch_In();
-    currBall->setCounter(currBall->getCounter() + 1);
-    //movingHole->setXPrev(movingHole->getX());
-    //movingHole->setYPrev(movingHole->getY());
-    if (currBall->getCounter() == 30) {
-      currBall->IncrementVY();
-      currBall->setCounter(0);
-    }
     movingHole->moveHole();
+    for (int i = 0; i < pegCount; i++) {
+      if (currBall->checkCollision(pegs[i]->getX(), pegs[i]->getY(), pegs[i]->getW(), pegs[i]->getH())) {
+        currBall->bounce(pegs[i]->getX(), pegs[i]->getY());
+        indexAngle = currBall->angleToIndex();
+        currBall->reset(indexAngle);
+        break;
+      }
+    }
     currBall->moveBall();
     // 1) sample slide pot
     // 2) read input switches
@@ -263,10 +267,39 @@ int main(void){ // final main
   TimerG12_IntArm(2666667, 2);
   // initialize all data structures
   __enable_irq();
+
+  
+  //Prompt user for level select
+  //if (levelSelect == 1) {
+  Level* level = new Level(1);
+  //} else {
+  // Level* level = new Level(2);
+  //}
   ST7735_DrawBitmap(0, 160, level->getImage(), 128, 160);
+  int x = 0;
+  int y = 0;
+  bool found;
+   while (pegCount < 10) {
+    M = Random(100);
+    found = false;
+    x = Random(105) + 8;
+    y = Random(101) + 36;
+    for (int i = 0; i < pegCount; i++) {
+      if (((x - (pegs[i]->getX()/256)) < 16 && (x - (pegs[i]->getX()/256)) > -16) && ((y - (pegs[i]->getY()/256)) < 16 && (y - (pegs[i]->getY()/256)) > -16)) {
+        found = true;
+        break;
+      }
+    }
+    if (!found) {
+      pegs[pegCount] = new Peg(x*256, y*256, 0, Random(3));
+      pegCount++;
+    }
+  }
+  for (int i = 0; i < pegCount; i++) {
+    ST7735_DrawBitmap(pegs[i]->getX()/FIX, pegs[i]->getY()/FIX, pegs[i]->getImage(), 8, 8);
+  }
 while(1){
     data = Sensor.Convert(data);
-    currBall->reset(data);
     ST7735_DrawBitmap(currBall->getX()/FIX, currBall->getY()/FIX, currBall->getImage(), 8, 8);
     ST7735_DrawBitmap(movingHole->getX()/FIX, movingHole->getY()/FIX, movingHole->getImage(), 48, 24);
     // wait for semaphore
