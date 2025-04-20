@@ -7,7 +7,7 @@
 #include <stdint.h>
 #include <ti/devices/msp/msp.h>
 #include "Sound.h"
-#include "sounds.h"
+#include "Sounds.h"
 #include "sounds/sounds.h"
 #include "../inc/DAC5.h"
 #include "../inc/Timer.h"
