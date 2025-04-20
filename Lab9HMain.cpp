@@ -263,6 +263,7 @@ int main4(void){ uint32_t last=0,now;
     // modify this to test all your sounds
   }
 }
+//hi
 // ALL ST7735 OUTPUT MUST OCCUR IN MAIN
 int main(void){ // final main
   __disable_irq();
