@@ -2,6 +2,7 @@
 #include "GameObject.h"
 #include <cstdint>
 #include <iostream>
+#include <cmath> // For more complex physics if needed, maybe not for simple reflect
 
 const int32_t angleTable[256][2] = {
     { 1024,    0}, { 1024,   25}, { 1023,   50}, { 1021,   75}, { 1019,  100}, { 1016,  125}, { 1013,  150}, { 1009,  175},
@@ -74,6 +75,20 @@ void Ball::reset(int32_t angle){
     active = false;
     vx = angleTable[    ][0] / 256;
     vy = angleTable[index][1] / 256;    
+}
+
+void Ball::simpleReflect() {
+    // Very basic reflection: just reverse both velocity components.
+    // This isn't physically accurate for angled collisions but is simple.
+    // A better approach would determine the collision normal.
+    vx = -vx;
+    vy = -vy;
+
+    // Optional: Add a small push away from the collision point to prevent sticking
+    // This requires knowing the relative position of the ball and peg.
+    // Example: move ball one step back along the reversed velocity vector
+    // x += vx / 16; // Adjust divisor for desired push strength
+    // y += vy / 16;
 }
 
 bool Ball::getActive(){
