@@ -13,6 +13,7 @@ public:
     
     bool getActive();
     void setActive();
+    void setActive(bool isActive); // Set active to specified state
     int32_t getX();
     int32_t getY();
     int16_t getW();
@@ -20,6 +21,8 @@ public:
     void IncrementVY();
     const uint16_t* getImage();
     bool checkCollision(uint16_t objX, uint16_t objY);
+    bool checkHoleCollision(uint16_t holeX, uint16_t holeY);  // Added method to check collision with the bucket/hole
+    bool isLost();  // Added method to check if ball is lost (off-screen)
     void bounce(uint16_t objX, uint16_t objY);
     void moveBall();
     int32_t isqrt(int32_t n);
@@ -33,4 +36,4 @@ private:
     bool active;
 };
 
-#endif 
+#endif

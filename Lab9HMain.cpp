@@ -44,10 +44,16 @@ extern "C" void TIMG12_IRQHandler(void);
 #define GAME_RUNNING  2
 #define GAME_OVER     3
 
+// Button press detection state
+#define BUTTON_RELEASED 0
+
 // Current menu state
+Level* currentLevel = nullptr; // Store level background for redrawing
+bool transitionedToGameOver = false; // Flag to prevent repeated game over transitions
 uint8_t menuState = MENU_MAIN;
 uint8_t selectedOption = 0;
 uint8_t maxOptions = 1; // Number of options in main menu (play game and instructions)
+uint32_t lastButtonState = BUTTON_RELEASED; // Track last button state
 
 // ****note to ECE319K students****
 // the data sheet says the ADC does not work when clock is 80 MHz
@@ -98,7 +104,7 @@ const uint16_t BlackCoverSprite[64] = {
 
 // Draw the title 
 void DrawTitle() {
-  ST7735_SetCursor(4, 2);
+  ST7735_SetCursor(5, 2);
   ST7735_OutString((char *)"PEGGLE DASH");
 }
 
@@ -125,30 +131,79 @@ void DrawMainMenu() {
 
 // Draw instructions
 void DrawInstructions() {
-  ST7735_SetCursor(3, 2);
+  ST7735_SetCursor(5, 1);
   ST7735_OutString((char *)"HOW TO PLAY");
   
   ST7735_SetCursor(0, 4);
   ST7735_OutString((char *)"- Use slidepot to aim");
   
-  ST7735_SetCursor(0, 6);
+  ST7735_SetCursor(0, 7);
   ST7735_OutString((char *)"- Press button to shoot");
   
-  ST7735_SetCursor(0, 8);
+  ST7735_SetCursor(0, 10);
   ST7735_OutString((char *)"- Hit pegs to score pts");
   
-  ST7735_SetCursor(0, 10);
+  ST7735_SetCursor(0, 13);
   ST7735_OutString((char *)"- Get ball into bucket");
   
-  ST7735_SetCursor(0, 12);
-  ST7735_OutString((char *)"- Advance to next lvl");
-  
-  ST7735_SetCursor(4, 15);
+  ST7735_SetCursor(0, 16);
   ST7735_OutString((char *)"Press btn to return");
 }
 
+// Helper function to restore background at a specific position
+// Helper function to restore background at a specific position
+void RestoreBackground(int16_t x, int16_t y, int16_t w, int16_t h) {
+  if (currentLevel == nullptr) return;
+  
+  // Make sure we don't try to restore outside the screen boundaries
+  if (x < 0 || y < 0 || x + w > 128 || y + h > 160) return;
+  
+  // Create a temporary buffer to hold the section of the background
+  static uint16_t backgroundSection[64]; // Max 8x8 pixels for ball
+  
+  // Extract the specific section of the background image
+  const uint16_t* levelImage = currentLevel->getImage();
+  
+  // Fill the buffer with the correct background pixels
+  // The level image is drawn at (0, 160) which means the y-coordinate in the image
+  // is offset from the screen y-coordinate
+  for (int j = 0; j < h; j++) {
+    for (int i = 0; i < w; i++) {
+      // Calculate position in the level image (which is drawn at y=160)
+      // This is the key fix - we need to calculate y position differently
+      int imgPos = (y+j)*128 + (x+i);      
+      // Make sure we don't go out of bounds
+      if (imgPos >= 0 && imgPos < 128 * 160) {
+        // Store in our local buffer
+        backgroundSection[j * w + i] = levelImage[imgPos];
+      } else {
+        // Use black if we're out of bounds
+        backgroundSection[j * w + i] = 0x0000;
+      }
+    }
+  }
+  
+  // Draw just this small section of the background
+  ST7735_DrawBitmap(x, y, backgroundSection, w, h);
+  
+  // Check if any pegs are in this area and need to be redrawn
+  for (int i = 0; i < pegCount; i++) {
+    int16_t pegX = pegs[i].getX() >> FIX;
+    int16_t pegY = pegs[i].getY() >> FIX;
+    
+    // If this peg overlaps with our restored area, redraw it
+    if (pegX + 8 > x && pegX < x + w && pegY + 8 > y && pegY < y + h) {
+      ST7735_DrawBitmap(pegX, pegY, pegs[i].getImage(), 8, 8);
+    }
+  }
+}
 // Initialize the game
 void InitGame() {
+
+  if (currentLevel != nullptr) {
+    delete currentLevel;
+  }
+  currentLevel = new Level(levelSelect);
   // Initialize the game state
   gameState.resetGame();
   gameState.setCurrentLevel(levelSelect);
@@ -227,17 +282,22 @@ void TIMG12_IRQHandler(void){uint32_t pos,msg;
     }
     
     // Check if ball is lost (e.g., off screen)
-    if (currBall->isLost()) {
-      gameState.useBall();
-      // Only reset if we still have balls left
-      if (!gameState.isGameOver()) {
-        currBall->reset(192); // Reset with default angle
-      }
+ // Check if ball is lost (e.g., off screen)
+if (currBall->isLost()) {
+  if (!transitionedToGameOver) { // Only process if not already transitioning
+    gameState.useBall();
+    // Only reset if we still have balls left
+    if (!gameState.isGameOver()) {
+      currBall->reset(192); // Reset with default angle
     }
+  }
+}
     
     //currBall->reset(indexAngle);
-    currBall->moveBall();
-    // 1) sample slide pot
+    if (currBall->getActive()) {
+      currBall->moveBall();
+    }
+        // 1) sample slide pot
     // 2) read input switches
     // 3) move sprites
     // 4) start sounds
@@ -398,8 +458,6 @@ int main(void){ // final main
   PLL_Init(); // set bus speed
   LaunchPad_Init();
   ST7735_InitPrintf(INITR_REDTAB);
-    //note: if you colors are weird, see different options for
-    // ST7735_InitR(INITR_REDTAB); inside ST7735_InitPrintf()
   ST7735_FillScreen(ST7735_BLACK);
   Sensor.Init(); // PB18 = ADC1 channel 5, slidepot
   Switch_Init(); // initialize switches
@@ -419,74 +477,84 @@ int main(void){ // final main
   DrawTitle();
   DrawMainMenu();
   
-  uint32_t lastInput = 0;
-  uint32_t currentInput = 0;
+  uint32_t lastInput = BUTTON_RELEASED;
+  uint32_t currentInput = BUTTON_RELEASED;
   Level* level = nullptr;
   
   // Main game loop
   while(1) {
     currentInput = Switch_In();
+    // Give more time for switch debouncing
+    Clock_Delay(800000);  // increased from 300000 to 800000 for better debouncing
     
-    // Process button inputs for menu navigation
-    if (lastInput != currentInput) {
-      if (menuState == MENU_MAIN) {
-        // Main Menu Controls
-        if (currentInput == BUTTON_DOWN && selectedOption < maxOptions) {
-          selectedOption++;
-          DrawMainMenu();
-        } else if (currentInput == BUTTON_UP && selectedOption > 0) {
-          selectedOption--;
-          DrawMainMenu();
-        } else if (currentInput > 0) { // Any button press
-          // Option selected
-          Sound_Shoot(); // Selection sound
-          
-          if (selectedOption == 0) {
-            // Start Game
-            menuState = GAME_RUNNING;
-            ST7735_FillScreen(ST7735_BLACK);
-            InitGame();
-          } else if (selectedOption == 1) {
-            // Show Instructions
-            menuState = MENU_INSTRUCT;
-            ST7735_FillScreen(ST7735_BLACK);
-            DrawInstructions();
+    // Simplified button press detection
+    if (currentInput != lastInput) {  // Only process when input changes
+      if (currentInput != 0) {  // Any button is pressed
+        if (menuState == MENU_MAIN) {
+          // Main Menu Controls
+          if (currentInput & BUTTON_DOWN) {
+            // Toggle between options with any up/down press
+            selectedOption = (selectedOption == 0) ? 1 : 0;
+            DrawMainMenu();
+          } else if (currentInput & BUTTON_LEFT) {
+            // Option selected
+            Sound_Shoot(); // Selection sound
+            
+            if (selectedOption == 0) {
+              // Start Game
+              menuState = GAME_RUNNING;
+              ST7735_FillScreen(ST7735_BLACK);
+              InitGame();
+              currBall->reset(192);
+            } else if (selectedOption == 1) {
+              // Show Instructions
+              menuState = MENU_INSTRUCT;
+              ST7735_FillScreen(ST7735_BLACK);
+              DrawInstructions();
+            }
           }
-        }
-      } else if (menuState == MENU_INSTRUCT) {
-        // Instructions Screen Controls
-        if (currentInput > 0) {
-          // Return to main menu
-          menuState = MENU_MAIN;
-          ST7735_FillScreen(ST7735_BLACK);
-          DrawTitle();
-          DrawMainMenu();
-        }
-      } else if (menuState == GAME_RUNNING) {
-        // In-game controls
-        
-        // Handle return to menu from game (if needed)
-        if (currentInput == 8) { // Adjust as needed for your specific button setup
-          menuState = MENU_MAIN;
-          ST7735_FillScreen(ST7735_BLACK);
-          DrawTitle();
-          DrawMainMenu();
-          if (level != nullptr) {
-            delete level;
-            level = nullptr;
+        } else if (menuState == MENU_INSTRUCT) {
+          // Instructions Screen Controls
+          if (currentInput & BUTTON_LEFT) {
+            // Return to main menu
+            menuState = MENU_MAIN;
+            ST7735_FillScreen(ST7735_BLACK);
+            DrawTitle();
+            DrawMainMenu();
           }
-        }
-      } else if (menuState == GAME_OVER) {
-        // Game Over Screen Controls
-        if (currentInput > 0) {
-          // Return to main menu
-          menuState = MENU_MAIN;
-          ST7735_FillScreen(ST7735_BLACK);
-          DrawTitle();
-          DrawMainMenu();
+        } else if (menuState == GAME_RUNNING) {
+          // In-game controls
+          if (currentInput & BUTTON_LEFT) { // Use specific button to return to menu
+            menuState = MENU_MAIN;
+            ST7735_FillScreen(ST7735_BLACK);
+            DrawTitle();
+            DrawMainMenu();
+            if (level != nullptr) {
+              delete level;
+              level = nullptr;
+            }
+          } else if ((currentInput & BUTTON_DOWN) && !currBall->getActive()) {
+            // Shoot the ball when player presses the right button and it was previously inactive
+            currBall->setActive(true);
+            // Play sound when shooting
+            Sound_Shoot();
+          }
+        } else if (menuState == GAME_OVER) {
+          // Game Over Screen Controls
+          if (currentInput & BUTTON_LEFT) {
+            // Return to main menu
+            menuState = MENU_MAIN;
+            transitionedToGameOver = false;  // Reset the flag
+            ST7735_FillScreen(ST7735_BLACK);
+            DrawTitle();
+            DrawMainMenu();
+          }
         }
       }
     }
+    
+    // Update last input state
+    lastInput = currentInput;
     
     // Game state processing
     if (menuState == GAME_RUNNING) {
@@ -503,13 +571,32 @@ int main(void){ // final main
       ST7735_OutString((char *)"Lvl:");
       ST7735_OutUDec(gameState.getCurrentLevel());
       
+      // Store the previous position of the ball
+      static int16_t prevBallX = -1;
+      static int16_t prevBallY = -1;
+      
+      // Current ball position
+      int16_t currentBallX = currBall->getX() >> FIX;
+      int16_t currentBallY = currBall->getY() >> FIX;
+      
+      // Clear the previous position of the ball using black sprite
+      if (prevBallX >= 0 && prevBallY >= 0 && 
+          (prevBallX != currentBallX || prevBallY != currentBallY)) {
+        ST7735_DrawBitmap(prevBallX, prevBallY, BlackCoverSprite, 8, 8);
+      }
+      
+      // Update previous position
+      prevBallX = currentBallX;
+      prevBallY = currentBallY;
+      
       // Draw current game elements
-      ST7735_DrawBitmap(currBall->getX() >> FIX, currBall->getY() >> FIX, currBall->getImage(), 8, 8);
+      ST7735_DrawBitmap(currentBallX, currentBallY, currBall->getImage(), 8, 8);
       ST7735_DrawBitmap(movingHole->getX() >> FIX, movingHole->getY() >> FIX, movingHole->getImage(), 48, 24);
       
       // Check for game over
-      if (gameState.isGameOver()) {
+      if (gameState.isGameOver() && !transitionedToGameOver) {
         menuState = GAME_OVER;
+        transitionedToGameOver = true;  // Set flag to prevent repeated transitions
         ST7735_FillScreen(ST7735_BLACK);
         ST7735_SetCursor(5, 5);
         ST7735_OutString((char *)"GAME OVER");
@@ -574,8 +661,5 @@ int main(void){ // final main
         Sound_Explosion();
       }
     }
-    
-    lastInput = currentInput;
-    Clock_Delay(100000); // Delay to prevent button bounce
   }
 }
