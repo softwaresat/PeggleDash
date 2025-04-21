@@ -13,7 +13,7 @@ public:
     Level(uint8_t num);               // Constructor
     const uint16_t* getImage();
     void setSound(unsigned char sound);
-    ~Level();
+    ~Level() = default;
 
 private:
     uint8_t levelNum;

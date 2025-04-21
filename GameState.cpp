@@ -56,7 +56,7 @@ void GameState::useBall() {
 }
 
 void GameState::resetGame() {
-    ballsRemaining = 3;    // Default 3 balls
+    ballsRemaining = 10;    // Default 10 balls
     score = 0;
     currentLevel = 1;
     gameOver = false;
