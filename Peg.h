@@ -13,6 +13,7 @@ public:
     int32_t getY();
     uint16_t getW();
     uint16_t getH();
+    bool getHitState();
     const uint16_t* getImage();
     void updatePeg();
     bool isDestroyed();

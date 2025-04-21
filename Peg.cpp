@@ -71,6 +71,10 @@ int32_t Peg::getX(){
     return x;
 }
 
+bool Peg::getHitState() {
+    return isHit;
+}
+
 int32_t Peg::getY(){
     return y;
 }

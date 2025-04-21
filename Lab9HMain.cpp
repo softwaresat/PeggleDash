@@ -77,13 +77,6 @@ uint32_t M=1;
 void SeedRandom(uint32_t seed) {
   M = seed;
 }
-
-
-
-void SeedRandom(uint32_t seed) {
-  M = seed;
-}
-
 uint32_t Random32(void){
   M = 1664525*M+1013904223;
   return M;
@@ -95,7 +88,6 @@ uint32_t Random(uint32_t n){
 SlidePot Sensor(1500,0); // copy calibration from Lab 7
 uint32_t data;
 uint32_t input;
-Ball* currBall =  new Ball(192);
 Ball* currBall =  new Ball(192);
 Hole* movingHole = new Hole();
 // Always start with level 1
@@ -371,7 +363,7 @@ void TIMG12_IRQHandler(void){uint32_t pos,msg;
       if (currBall->checkCollision(pegs[i].getX(), pegs[i].getY())) {
         currBall->bounce(pegs[i].getX(), pegs[i].getY());
         // Award points when hitting pegs
-        gameState.addPoints(10);
+        gameState.addPoints(100);
         // Play sound when hitting pegs
         Sound_Fastinvader1();
         // Simply update the peg (decrements hits)
@@ -401,15 +393,10 @@ void TIMG12_IRQHandler(void){uint32_t pos,msg;
     
     // Process peg hit timers
     for (int i = 0; i < pegCount; i++) {
-      if (pegs[i].isHit && !pegs[i].needsErase) {
+      if (pegs[i].needsErase) {
         if (pegs[i].hitTimer > 0) {
           // Decrement timer
           pegs[i].hitTimer--;
-        } else {
-          // Timer expired, mark for removal if peg is destroyed
-          if (pegs[i].isDestroyed()) {
-            pegs[i].needsErase = true;
-          }
         }
       }
     }
@@ -732,17 +719,19 @@ int main(void){ // final main
       
       // Check for pegs that need to be erased from the screen
       for (int i = 0; i < pegCount; i++) {
+        int32_t pegX = pegs[i].getX() >> FIX;
+        int32_t pegY = pegs[i].getY() >> FIX;
         if (pegs[i].needsErase) {
           // Get peg position and erase it
-          int16_t pegX = pegs[i].getX() >> FIX;
-          int16_t pegY = pegs[i].getY() >> FIX;
-          
+          ST7735_DrawBitmap(pegX, pegY, pegs[i].getImage(), 8, 8);
           // Erase the peg by drawing a black sprite over it
-          ST7735_DrawBitmap(pegX, pegY, BlackCoverSprite, 8, 8);
-          
           // Reset the flag so we don't erase it again
-          pegs[i].needsErase = false;
         }
+        if (pegs[i].needsErase && pegs[i].hitTimer == 0) {
+          ST7735_DrawBitmap(pegX, pegY, BlackCoverSprite, 8, 8);
+          pegs[i].needsErase = false;
+        } 
+        
       }
       
       // Update previous position
