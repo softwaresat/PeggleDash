@@ -393,19 +393,22 @@ void TIMG12_IRQHandler(void){uint32_t pos,msg;
       gameState.addPoints(50);
       // Play sound when scoring
       Sound_Killed();
+      // Reset the ball since it's been captured
+      currBall->reset(192);
     }
     
     // Check if ball is lost (e.g., off screen)
- // Check if ball is lost (e.g., off screen)
-if (currBall->isLost()) {
-  if (!transitionedToGameOver) { // Only process if not already transitioning
-    gameState.useBall();
-    // Only reset if we still have balls left
-    if (!gameState.isGameOver()) {
-      currBall->reset(192); // Reset with default angle
+    if (currBall->isLost()) {
+      if (!transitionedToGameOver) { // Only process if not already transitioning
+        gameState.useBall();
+        // Play a sound when ball is lost
+        Sound_Fastinvader2();
+        // Only reset if we still have balls left
+        if (!gameState.isGameOver()) {
+          currBall->reset(192); // Reset with default angle
+        }
+      }
     }
-  }
-}
     
     //currBall->reset(indexAngle);
     if (currBall->getActive()) {

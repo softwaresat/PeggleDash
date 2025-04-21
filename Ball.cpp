@@ -169,10 +169,12 @@ bool Ball::checkHoleCollision(uint16_t holeX, uint16_t holeY) {
     int32_t bucketX = holeX >> 8;
     int32_t bucketY = holeY >> 8;
     
-    // The bucket/hole is larger than pegs, so use a larger radius check
-    // Check if ball is entering the top part of the bucket
-    if (ballX >= bucketX + 12 && ballX <= bucketX + 36 && 
-        ballY >= bucketY - 4 && ballY <= bucketY + 4) {
+    // The bucket/hole is larger than pegs
+    // Check if ball is entering the top part of the bucket (make detection more generous)
+    if (ballX >= bucketX + 10 && ballX <= bucketX + 38 && 
+        ballY >= bucketY - 6 && ballY <= bucketY + 8) {
+        // When the ball hits the bucket, deactivate it so it "falls in"
+        active = false;
         return true;
     }
     
@@ -181,7 +183,9 @@ bool Ball::checkHoleCollision(uint16_t holeX, uint16_t holeY) {
 
 bool Ball::isLost() {
     // Ball is lost if it goes below the bottom of the screen
-    return ((y >> 8) > 160);
+    // Screen height is 160 pixels
+    int32_t ballY = y >> 8;
+    return (ballY > 160);
 }
 
 bool Ball::getActive(){
