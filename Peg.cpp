@@ -116,5 +116,5 @@ void Peg::updatePeg(){
 }
 
 bool Peg::isDestroyed() {
-    return hits <= 0;
+    return !(needsErase) && hits <= 0;
 }

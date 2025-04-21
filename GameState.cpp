@@ -66,12 +66,10 @@ void GameState::addBall() {
 void GameState::resetGame() {
     ballsRemaining = 10;    // Default 10 balls
     score = 0;
-    currentLevel = 1;
     gameOver = false;
 }
 
 void GameState::nextLevel() {
-    currentLevel++;
     // You could add an extra ball as a reward for completing a level
-    ballsRemaining++;
+    ballsRemaining = 10;
 }

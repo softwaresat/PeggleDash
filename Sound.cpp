@@ -19,28 +19,15 @@ uint32_t soundLen = 0;
 uint32_t soundIndex = 0;
 bool isPlaying = false;
 
-const uint8_t* soundPtr = nullptr;
-uint32_t soundLen = 0;
-uint32_t soundIndex = 0;
-bool isPlaying = false;
-
 // initialize a 11kHz SysTick, however no sound should be started
 // Initialize the 5 bit DAC
 void Sound_Init(void){
-  
-  DAC5_Init(); // Initialize the DAC
-  
   uint32_t period = 7273; // For 11kHz sampling rate
   
   DAC5_Init(); // Initialize the DAC
-  
-  uint32_t period = 7273; // For 11kHz sampling rate
-  
   SysTick->CTRL = 0;         // disable SysTick during setup
   SysTick->LOAD = period-1;  // reload value
   SysTick->VAL = 0;          // any write to current clears it
-  SCB->SHP[1] = SCB->SHP[1]&(~0xC0000000)|0x40000000; // set priority = 2
-  SysTick->CTRL = 0x00;      // enable SysTick but don't enable interrupt yet
   SCB->SHP[1] = SCB->SHP[1]&(~0xC0000000)|0x40000000; // set priority = 2
   SysTick->CTRL = 0x00;      // enable SysTick but don't enable interrupt yet
 }
@@ -82,7 +69,8 @@ void Sound_Start(const uint8_t *pt, uint32_t count){
 }
 
 void Sound_Shoot(void){
-  Sound_Start(shoot, sizeof(shoot)/sizeof(shoot[0]));}
+  Sound_Start(shoot, sizeof(shoot));
+}
 
 
 void Sound_Killed(void){

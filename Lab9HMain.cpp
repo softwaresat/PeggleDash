@@ -91,7 +91,7 @@ uint32_t input;
 Ball* currBall =  new Ball(192);
 Hole* movingHole = new Hole();
 // Always start with level 1
-const int8_t levelSelect = 1;
+int8_t levelSelect = 1;
 Peg pegs[25];
 int8_t pegCount = 0;
 int8_t indexAngle;
@@ -304,9 +304,8 @@ void InitGame() {
   ST7735_SetCursor(15, 0);
   ST7735_OutString((char *)"Lvl:");
   ST7735_OutUDec(gameState.getCurrentLevel());
-  
-  Level* level = new Level(levelSelect);
-  ST7735_DrawBitmap(0, 160, level->getImage(), 128, 160);
+
+  ST7735_DrawBitmap(0, 160, currentLevel->getImage(), 128, 160);
   
   // Generate pegs
   pegCount = 0;
@@ -370,7 +369,7 @@ void TIMG12_IRQHandler(void){uint32_t pos,msg;
         pegs[i].updatePeg();
         
         // If the peg is now destroyed, mark it to be erased in main loop
-        if (pegs[i].isDestroyed()) {
+        if (pegs[i].getHitState()) {
           // We'll handle the actual erasing in main, since we can't do LCD operations in ISR
           pegs[i].needsErase = true;
         }
@@ -661,9 +660,9 @@ int main(void){ // final main
             ST7735_FillScreen(ST7735_BLACK);
             DrawTitle();
             DrawMainMenu();
-            if (level != nullptr) {
-              delete level;
-              level = nullptr;
+            if (currentLevel != nullptr) {
+              delete currentLevel;
+              currentLevel = nullptr;
             }
           } else if ((currentInput & BUTTON_DOWN) && !currBall->getActive()) {
             // Shoot the ball when player presses the right button and it was previously inactive
@@ -750,8 +749,16 @@ int main(void){ // final main
       
       ST7735_DrawBitmap(movingHole->getX() >> FIX, movingHole->getY() >> FIX, movingHole->getImage(), 48, 24);
       
-      // Check for game over
-      if (gameState.isGameOver() && !transitionedToGameOver) {
+      // Handle level advancement
+      if (gameState.getScore() >= (gameState.getCurrentLevel() * 500) && levelSelect == 1) {
+        gameState.nextLevel();
+        levelSelect++;
+        // Load the next level, reset ball, etc.
+        ST7735_FillScreen(ST7735_BLACK);
+        InitGame();
+        // Play level-up sound
+        Sound_Explosion();
+     } else if (gameState.getScore() >= (gameState.getCurrentLevel() * 500) && levelSelect == 2) {
         menuState = GAME_OVER;
         transitionedToGameOver = true;  // Set flag to prevent repeated transitions
         ST7735_FillScreen(ST7735_BLACK);
@@ -798,65 +805,7 @@ int main(void){ // final main
         
         // Play game over sound
         Sound_Explosion();
-      }
-      
-      // Handle level advancement
-      if (gameState.getScore() >= (gameState.getCurrentLevel() * 500)) {
-        gameState.nextLevel();
-        // Load the next level, reset ball, etc.
-        ST7735_FillScreen(ST7735_BLACK);
-        
-        // Load new level
-        if (level != nullptr) {
-          delete level;
-        }
-        level = new Level(gameState.getCurrentLevel());
-        
-        // Draw new level
-        ST7735_DrawBitmap(0, 160, level->getImage(), 128, 160);
-        
-        // Reset pegs
-        pegCount = 0;
-        
-        // Generate new pegs for next level
-        int x = 0;
-        int y = 0;
-        bool found = false;
-        
-        while (pegCount < 25) {
-          found = false;
-          x = Random(113) + 4;
-          y = Random(104) + 24;
-          if (x < 0) {
-            x = -x;
-          } 
-          if (y < 0) {
-            y = -y;
-          } 
-          for (int i = 0; i < pegCount; i++) {
-            if (((x - (pegs[i].getX() >> FIX)) < 12 && (x - (pegs[i].getX() >> FIX)) > -12) && 
-                ((y - (pegs[i].getY() >> FIX)) < 12 && (y - (pegs[i].getY() >> FIX)) > -12)) {
-              found = true;
-              break;
-            }
-          }
-          if (!found) {
-            pegs[pegCount].init(x*256, y*256, 0, Random(3));
-            pegCount++;
-          }
-        }
-        
-        // Draw new pegs
-        for (int i = 0; i < pegCount; i++) {
-          ST7735_DrawBitmap(pegs[i].getX() >> FIX, pegs[i].getY() >> FIX, pegs[i].getImage(), 8, 8);
-        }
-        
-        // Reset ball
-        currBall->reset(192);
-        
-        // Play level-up sound
-        Sound_Explosion();
-      }
+     }
     }
   }
 }
