@@ -13,6 +13,7 @@ ORDERED_OBJS += \
 "./Ball.o" \
 "./Clock.o" \
 "./DAC5.o" \
+"./GameState.o" \
 "./Hole.o" \
 "./LED.o" \
 "./Lab9HMain.o" \
@@ -167,9 +168,9 @@ ECE319K_Lab9H.out: $(OBJS) $(CMD_SRCS) $(GEN_CMDS)
 # Other Targets
 clean:
 	-$(RM) $(EXE_OUTPUTS__QUOTED)
-	-$(RM) "Ball.o" "Clock.o" "DAC5.o" "Hole.o" "LED.o" "Lab9HMain.o" "LaunchPad.o" "Level.o" "Peg.o" "SPI.o" "ST7735.o" "SlidePot.o" "SmallFont.o" "Sound.o" "Sounds.o" "Switch.o" "TExaS.o" "Timer.o" "images\pipedreams\PipeSound.o" "ticlang\startup_mspm0g3507_ticlang.o" 
+	-$(RM) "Ball.o" "Clock.o" "DAC5.o" "GameState.o" "Hole.o" "LED.o" "Lab9HMain.o" "LaunchPad.o" "Level.o" "Peg.o" "SPI.o" "ST7735.o" "SlidePot.o" "SmallFont.o" "Sound.o" "Sounds.o" "Switch.o" "TExaS.o" "Timer.o" "images\pipedreams\PipeSound.o" "ticlang\startup_mspm0g3507_ticlang.o" 
 	-$(RM) "images\pipedreams\PipeSound.d" "ticlang\startup_mspm0g3507_ticlang.d" 
-	-$(RM) "Ball.d" "Clock.d" "DAC5.d" "Hole.d" "LED.d" "Lab9HMain.d" "LaunchPad.d" "Level.d" "Peg.d" "SPI.d" "ST7735.d" "SlidePot.d" "SmallFont.d" "Sound.d" "Sounds.d" "Switch.d" "TExaS.d" "Timer.d" 
+	-$(RM) "Ball.d" "Clock.d" "DAC5.d" "GameState.d" "Hole.d" "LED.d" "Lab9HMain.d" "LaunchPad.d" "Level.d" "Peg.d" "SPI.d" "ST7735.d" "SlidePot.d" "SmallFont.d" "Sound.d" "Sounds.d" "Switch.d" "TExaS.d" "Timer.d" 
 	-@echo 'Finished clean'
 	-@echo ' '
 

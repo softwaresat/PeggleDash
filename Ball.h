@@ -13,6 +13,7 @@ public:
     
     bool getActive();
     void setActive();
+    void setActive(bool isActive); // Set active to specified state
     int32_t getX();
     int32_t getY();
     int16_t getW();
