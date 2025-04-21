@@ -40,6 +40,13 @@ extern "C" void TIMG12_IRQHandler(void);
 #define BUTTON_UP    (1 << 3)  // PA28
 #define FIX 8
 
+// Colors for improved UI
+#define MENU_TITLE_COLOR     ST7735_YELLOW
+#define MENU_SELECTED_COLOR  ST7735_CYAN
+#define MENU_NORMAL_COLOR    ST7735_WHITE
+#define MENU_HEADER_COLOR    ST7735_MAGENTA
+#define MENU_FOOTER_COLOR    ST7735_GREEN
+
 // Menu states
 #define MENU_MAIN     0
 #define MENU_INSTRUCT 1
@@ -111,52 +118,128 @@ const uint16_t BlackCoverSprite[64] = {
  0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 
 };
 
-// Draw the title 
+// Draw the title with decorative elements
 void DrawTitle() {
-  ST7735_SetCursor(5, 2);
-  ST7735_OutString((char *)"PEGGLE DASH");
+  // Draw decorative border at the top
+  for(int i = 0; i < 128; i+=8) {
+    ST7735_DrawFastHLine(i, 0, 8, ST7735_BLUE);
+  }
+  
+  // Set title color
+  ST7735_SetTextColor(MENU_TITLE_COLOR);
+  
+  // Draw the game title
+  ST7735_SetCursor(4, 2);
+  ST7735_OutString((char *)"P E G G L E");
+  ST7735_SetCursor(6, 4);
+  ST7735_OutString((char *)"D A S H");
+  
+  // Draw decorative line
+  ST7735_DrawFastHLine(20, 30, 88, ST7735_CYAN);
+  ST7735_DrawFastHLine(20, 31, 88, ST7735_BLUE);
+  
+  // Reset text color
+  ST7735_SetTextColor(MENU_NORMAL_COLOR);
 }
 
-// Draw main menu options
+// Draw main menu options with improved visuals
 void DrawMainMenu() {
-  ST7735_SetCursor(5, 6);
+  // Draw menu options background boxes
+  ST7735_FillRect(15, 44, 98, 16, ST7735_BLUE);
+  ST7735_FillRect(15, 67, 98, 16, ST7735_BLUE);
+  
+  // Add menu option box outlines
+  ST7735_DrawRect(15, 44, 98, 16, ST7735_CYAN);
+  ST7735_DrawRect(15, 67, 98, 16, ST7735_CYAN);
+  
+  // Handle selection highlighting
   if (selectedOption == 0) {
-    ST7735_OutString((char *)"> Play Game");
+    ST7735_FillRect(16, 45, 96, 14, ST7735_BLUE);
+    ST7735_SetTextColor(MENU_SELECTED_COLOR);
   } else {
-    ST7735_OutString((char *)"  Play Game");
+    ST7735_FillRect(16, 45, 96, 14, ST7735_BLACK);
+    ST7735_SetTextColor(MENU_NORMAL_COLOR);
   }
   
-  ST7735_SetCursor(5, 8);
+  // Draw "Play Game" option
+  ST7735_SetCursor(6, 6);
+  ST7735_OutString((char *)"PLAY GAME");
+  
+  // Handle selection highlighting for second option
   if (selectedOption == 1) {
-    ST7735_OutString((char *)"> Instructions");
+    ST7735_FillRect(16, 68, 96, 14, ST7735_BLUE);
+    ST7735_SetTextColor(MENU_SELECTED_COLOR);
   } else {
-    ST7735_OutString((char *)"  Instructions");
+    ST7735_FillRect(16, 68, 96, 14, ST7735_BLACK);
+    ST7735_SetTextColor(MENU_NORMAL_COLOR);
   }
   
-  // Footer
-  ST7735_SetCursor(1, 15);
-  ST7735_OutString((char *)"Press btn to select");
+  // Draw "Instructions" option
+  ST7735_SetCursor(5, 9);
+  ST7735_OutString((char *)"INSTRUCTIONS");
+  
+  // Reset text color for other text
+  ST7735_SetTextColor(MENU_FOOTER_COLOR);
+  
+  // Draw controls help
+  ST7735_SetCursor(2, 15);
+  ST7735_OutString((char *)"UP/DOWN: Select");
+  ST7735_SetCursor(2, 16);
+  ST7735_OutString((char *)"LEFT: Confirm");
+  
+  // Reset text color
+  ST7735_SetTextColor(MENU_NORMAL_COLOR);
 }
 
-// Draw instructions
+// Draw instructions with improved visual design
 void DrawInstructions() {
-  ST7735_SetCursor(5, 1);
+  // Draw header with decorative elements
+  ST7735_DrawFastHLine(0, 10, 128, ST7735_BLUE);
+  ST7735_DrawFastHLine(0, 11, 128, ST7735_CYAN);
+  
+  // Set header color and draw title
+  ST7735_SetTextColor(MENU_HEADER_COLOR);
+  ST7735_SetCursor(4, 1);
   ST7735_OutString((char *)"HOW TO PLAY");
   
-  ST7735_SetCursor(0, 4);
-  ST7735_OutString((char *)"- Use slidepot to aim");
+  // Reset color for instructions text
+  ST7735_SetTextColor(MENU_NORMAL_COLOR);
   
-  ST7735_SetCursor(0, 7);
-  ST7735_OutString((char *)"- Press button to shoot");
+  // Draw instruction points with highlight boxes
+  // Instruction 1
+  ST7735_FillRect(2, 28, 124, 16, ST7735_BLUE);
+  ST7735_DrawRect(2, 28, 124, 16, ST7735_CYAN);
+  ST7735_SetCursor(1, 4);
+  ST7735_OutString((char *)"Use slidepot to aim");
   
-  ST7735_SetCursor(0, 10);
-  ST7735_OutString((char *)"- Hit pegs to score pts");
+  // Instruction 2
+  ST7735_FillRect(2, 51, 124, 16, ST7735_BLUE);
+  ST7735_DrawRect(2, 51, 124, 16, ST7735_CYAN);
+  ST7735_SetCursor(1, 7);
+  ST7735_OutString((char *)"Press button to shoot");
   
-  ST7735_SetCursor(0, 13);
-  ST7735_OutString((char *)"- Get ball into bucket");
+  // Instruction 3
+  ST7735_FillRect(2, 74, 124, 16, ST7735_BLUE);
+  ST7735_DrawRect(2, 74, 124, 16, ST7735_CYAN);
+  ST7735_SetCursor(1, 10);
+  ST7735_OutString((char *)"Hit pegs to score pts");
   
-  ST7735_SetCursor(0, 16);
-  ST7735_OutString((char *)"Press btn to return");
+  // Instruction 4
+  ST7735_FillRect(2, 97, 124, 16, ST7735_BLUE);
+  ST7735_DrawRect(2, 97, 124, 16, ST7735_CYAN);
+  ST7735_SetCursor(1, 13);
+  ST7735_OutString((char *)"Get ball into bucket");
+  
+  // Footer with return instructions
+  ST7735_DrawFastHLine(0, 125, 128, ST7735_CYAN);
+  ST7735_DrawFastHLine(0, 126, 128, ST7735_BLUE);
+  
+  ST7735_SetTextColor(MENU_FOOTER_COLOR);
+  ST7735_SetCursor(2, 16);
+  ST7735_OutString((char *)"LEFT btn: Return to menu");
+  
+  // Reset text color
+  ST7735_SetTextColor(MENU_NORMAL_COLOR);
 }
 
 // Helper function to restore background at a specific position
@@ -272,13 +355,26 @@ void TIMG12_IRQHandler(void){uint32_t pos,msg;
     input = Switch_In();
     movingHole->moveHole();
     for (int i = 0; i < pegCount; i++) {
+      // Skip pegs that are already destroyed
+      if (pegs[i].isDestroyed()) {
+        continue;
+      }
+      
       if (currBall->checkCollision(pegs[i].getX(), pegs[i].getY())) {
         currBall->bounce(pegs[i].getX(), pegs[i].getY());
         // Award points when hitting pegs
         gameState.addPoints(10);
         // Play sound when hitting pegs
         Sound_Fastinvader1();
-        //indexAngle = currBall->angleToIndex();
+        // Simply update the peg (decrements hits)
+        pegs[i].updatePeg();
+        
+        // If the peg is now destroyed, mark it to be erased in main loop
+        if (pegs[i].isDestroyed()) {
+          // We'll handle the actual erasing in main, since we can't do LCD operations in ISR
+          pegs[i].needsErase = true;
+        }
+        
         break;
       }
     }
@@ -606,12 +702,35 @@ int main(void){ // final main
         ST7735_DrawBitmap(prevBallX, prevBallY, BlackCoverSprite, 8, 8);
       }
       
+      // Check for pegs that need to be erased from the screen
+      for (int i = 0; i < pegCount; i++) {
+        if (pegs[i].needsErase) {
+          // Get peg position and erase it
+          int16_t pegX = pegs[i].getX() >> FIX;
+          int16_t pegY = pegs[i].getY() >> FIX;
+          
+          // Erase the peg by drawing a black sprite over it
+          ST7735_DrawBitmap(pegX, pegY, BlackCoverSprite, 8, 8);
+          
+          // Reset the flag so we don't erase it again
+          pegs[i].needsErase = false;
+        }
+      }
+      
       // Update previous position
       prevBallX = currentBallX;
       prevBallY = currentBallY;
       
       // Draw current game elements
       ST7735_DrawBitmap(currentBallX, currentBallY, currBall->getImage(), 8, 8);
+      
+      // Only draw pegs that aren't destroyed
+      for (int i = 0; i < pegCount; i++) {
+        if (!pegs[i].isDestroyed()) {
+          ST7735_DrawBitmap(pegs[i].getX() >> FIX, pegs[i].getY() >> FIX, pegs[i].getImage(), 8, 8);
+        }
+      }
+      
       ST7735_DrawBitmap(movingHole->getX() >> FIX, movingHole->getY() >> FIX, movingHole->getImage(), 48, 24);
       
       // Check for game over
@@ -619,15 +738,48 @@ int main(void){ // final main
         menuState = GAME_OVER;
         transitionedToGameOver = true;  // Set flag to prevent repeated transitions
         ST7735_FillScreen(ST7735_BLACK);
-        ST7735_SetCursor(5, 5);
+        
+        // Draw decorative top border
+        for(int i = 0; i < 128; i+=8) {
+          ST7735_DrawFastHLine(i, 0, 8, ST7735_RED);
+        }
+        
+        // Draw game over title
+        ST7735_SetTextColor(MENU_TITLE_COLOR);
+        ST7735_SetCursor(5, 2);
         ST7735_OutString((char *)"GAME OVER");
-        ST7735_SetCursor(3, 7);
-        ST7735_OutString((char *)"Final Score:");
-        ST7735_SetCursor(6, 9);
+        
+        // Draw decorative separator
+        ST7735_DrawFastHLine(20, 20, 88, ST7735_RED);
+        ST7735_DrawFastHLine(20, 21, 88, ST7735_RED);
+        
+        // Draw score frame
+        ST7735_DrawRect(24, 50, 80, 40, ST7735_BLUE);
+        ST7735_DrawRect(25, 51, 78, 38, ST7735_CYAN);
+        
+        // Display final score heading
+        ST7735_SetTextColor(MENU_HEADER_COLOR);
+        ST7735_SetCursor(4, 5);
+        ST7735_OutString((char *)"FINAL SCORE");
+        
+        // Display score value with highlight
+        ST7735_SetTextColor(ST7735_WHITE);
+        ST7735_SetCursor(6, 8);
         ST7735_OutUDec(gameState.getScore());
         
+        // Draw footer with return instructions
+        ST7735_DrawFastHLine(0, 130, 128, ST7735_BLUE);
+        ST7735_DrawFastHLine(0, 131, 128, ST7735_CYAN);
+        
+        ST7735_SetTextColor(MENU_FOOTER_COLOR);
         ST7735_SetCursor(1, 15);
-        ST7735_OutString((char *)"Press any button to continue");
+        ST7735_OutString((char *)"Press LEFT to continue");
+        
+        // Reset text color
+        ST7735_SetTextColor(MENU_NORMAL_COLOR);
+        
+        // Play game over sound
+        Sound_Explosion();
       }
       
       // Handle level advancement

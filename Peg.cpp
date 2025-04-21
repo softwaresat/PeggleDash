@@ -39,7 +39,8 @@ const unsigned short orangepeghit[] = {
 Peg::Peg() {
     this->x = 0;
     this->y = 0;
-    this->hits = 0;
+    this->hits = 1; // Default to 1 hit to destroy
+    this->needsErase = false; // Initialize needsErase to false
     w = 8;
     h = 8;
 }
@@ -47,7 +48,8 @@ Peg::Peg() {
 void Peg::init(int16_t x, int16_t y, int8_t hits, int8_t color) {
     this->x = x;
     this->y = y;
-    this->hits = hits;
+    this->hits = 1; // Initialize with 1 hit to destroy
+    this->needsErase = false; // Reset needsErase flag
     this->w = 8;
     this->h = 8;
 
@@ -81,5 +83,8 @@ const uint16_t* Peg::getImage(){
 
 void Peg::updatePeg(){
     hits--;
-    // Update color of peg accordingly
+}
+
+bool Peg::isDestroyed() {
+    return hits <= 0;
 }
