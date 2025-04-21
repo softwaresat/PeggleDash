@@ -96,5 +96,5 @@ void Sound_Fastinvader4(void){
 }
 
 void Sound_Highpitch(void){
-  Sound_Start(ufo_highpitch, sizeof(ufo_highpitch)/sizeof(ufo_highpitch[0]));
+  Sound_Start(highpitch, sizeof(highpitch)/sizeof(highpitch[0]));
 }
