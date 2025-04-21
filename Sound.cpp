@@ -19,7 +19,6 @@ uint32_t soundIndex = 0;
 bool isPlaying = false;
 
 // initialize a 11kHz SysTick, however no sound should be started
-// initialize any global variables
 // Initialize the 5 bit DAC
 void Sound_Init(void){
   DAC5_Init(); // Initialize the DAC
@@ -45,6 +44,7 @@ void SysTick_Handler(void){ // called at 11 kHz
       SysTick->CTRL = 0x01; // Disable interrupt but keep SysTick enabled
     }
   }
+ 
 }
 
 //******* Sound_Start ************
