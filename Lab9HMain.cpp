@@ -389,12 +389,29 @@ void TIMG12_IRQHandler(void){uint32_t pos,msg;
     
     // Check if ball falls into hole
     if (currBall->checkHoleCollision(movingHole->getX(), movingHole->getY())) {
-      // Award bonus points for getting ball in hole
-      gameState.addPoints(50);
+      // Award bonus points for getting ball in hole (now 100 points)
+      gameState.addPoints(100);
+      // Award an extra ball when the player gets the ball in the bucket
+      gameState.addBall();
       // Play sound when scoring
       Sound_Killed();
       // Reset the ball since it's been captured
       currBall->reset(192);
+    }
+    
+    // Process peg hit timers
+    for (int i = 0; i < pegCount; i++) {
+      if (pegs[i].isHit && !pegs[i].needsErase) {
+        if (pegs[i].hitTimer > 0) {
+          // Decrement timer
+          pegs[i].hitTimer--;
+        } else {
+          // Timer expired, mark for removal if peg is destroyed
+          if (pegs[i].isDestroyed()) {
+            pegs[i].needsErase = true;
+          }
+        }
+      }
     }
     
     // Check if ball is lost (e.g., off screen)

@@ -28,6 +28,7 @@ public:
     // Game actions
     void addPoints(uint32_t points);
     void useBall();           // Decrements ball count
+    void addBall();           // Adds a ball back to the player
     void resetGame();         // Reset to initial state
     void nextLevel();         // Advance to next level
 };

@@ -55,6 +55,14 @@ void GameState::useBall() {
     }
 }
 
+// Add a ball to the player's inventory (reward for hitting the bucket)
+void GameState::addBall() {
+    // Increment ball count (with a maximum cap if desired)
+    if (ballsRemaining < 99) {  // Arbitrary limit to prevent overflow issues
+        ballsRemaining++;
+    }
+}
+
 void GameState::resetGame() {
     ballsRemaining = 10;    // Default 10 balls
     score = 0;
