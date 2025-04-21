@@ -85,10 +85,9 @@ void Ball::moveBall(){
         if(x <= 0) x = 1;  // Prevent sticking to walls
         if((x / 256) + 8 >= 128) x = (120 << 8);
     }
-    if((y / 256) + 8 >= 160 || y <= 0){
+    if(y <= 0){
         vy = -((vy * 230) >> 8);  // slightly more energy loss on floor/ceiling
         if(y <= 0) y = 1;  // Prevent sticking to ceiling
-        if((y / 256) + 8 >= 160) y = (152 << 8);
     }
 }
 
@@ -166,13 +165,13 @@ void Ball::bounce(uint16_t objX, uint16_t objY) {
 bool Ball::checkHoleCollision(uint16_t holeX, uint16_t holeY) {
     int32_t ballX = x >> 8;
     int32_t ballY = y >> 8;
-    int32_t bucketX = holeX >> 8;
-    int32_t bucketY = holeY >> 8;
+    int32_t bucketX = (holeX >> 8) + 15;
+    int32_t bucketY = (holeY >> 8) - 17;
     
     // The bucket/hole is larger than pegs
     // Check if ball is entering the top part of the bucket (make detection more generous)
-    if (ballX >= bucketX + 10 && ballX <= bucketX + 38 && 
-        ballY >= bucketY - 6 && ballY <= bucketY + 8) {
+    if (ballX >= bucketX && ballX <= bucketX + 18 && 
+        ballY >= bucketY) {
         // When the ball hits the bucket, deactivate it so it "falls in"
         active = false;
         return true;
@@ -185,7 +184,7 @@ bool Ball::isLost() {
     // Ball is lost if it goes below the bottom of the screen
     // Screen height is 160 pixels
     int32_t ballY = y >> 8;
-    return (ballY > 160);
+    return (ballY > 168);
 }
 
 bool Ball::getActive(){
