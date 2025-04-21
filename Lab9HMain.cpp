@@ -78,7 +78,8 @@ uint32_t data;
 uint32_t input;
 Ball* currBall =  new Ball(192);
 Hole* movingHole = new Hole();
-int8_t levelSelect = 1;
+// Always start with level 1
+const int8_t levelSelect = 1;
 Peg pegs[25];
 int8_t pegCount = 0;
 int8_t indexAngle;
@@ -122,50 +123,10 @@ void DrawMainMenu() {
   ST7735_OutString((char *)"Press btn to select");
 }
 
-// Draw level selection menu
-void DrawLevelMenu() {
-  ST7735_SetCursor(4, 4);
-  ST7735_OutString((char *)"SELECT LEVEL");
-  
-  ST7735_SetCursor(5, 7);
-  if (levelSelect == 1) {
-    ST7735_SetTextColor(ST7735_YELLOW);
-    ST7735_OutString((char *)"> Level 1");
-    ST7735_SetTextColor(ST7735_WHITE);
-  } else {
-    ST7735_OutString((char *)"  Level 1");
-  }
-  
-  ST7735_SetCursor(5, 9);
-  if (levelSelect == 2) {
-    ST7735_SetTextColor(ST7735_YELLOW);
-    ST7735_OutString((char *)"> Level 2");
-    ST7735_SetTextColor(ST7735_WHITE);
-  } else {
-    ST7735_OutString((char *)"  Level 2");
-  }
-  
-  ST7735_SetCursor(5, 11);
-  if (levelSelect == 3) {
-    ST7735_SetTextColor(ST7735_YELLOW);
-    ST7735_OutString((char *)"> Level 3");
-    ST7735_SetTextColor(ST7735_WHITE);
-  } else {
-    ST7735_OutString((char *)"  Level 3");
-  }
-  
-  ST7735_SetCursor(4, 15);
-  ST7735_SetTextColor(ST7735_GREEN);
-  ST7735_OutString((char *)"Btn1: Back Btn2: Select");
-  ST7735_SetTextColor(ST7735_WHITE);
-}
-
 // Draw instructions
 void DrawInstructions() {
   ST7735_SetCursor(3, 2);
-  ST7735_SetTextColor(ST7735_CYAN);
   ST7735_OutString((char *)"HOW TO PLAY");
-  ST7735_SetTextColor(ST7735_WHITE);
   
   ST7735_SetCursor(0, 4);
   ST7735_OutString((char *)"- Use slidepot to aim");
@@ -183,9 +144,7 @@ void DrawInstructions() {
   ST7735_OutString((char *)"- Advance to next lvl");
   
   ST7735_SetCursor(4, 15);
-  ST7735_SetTextColor(ST7735_GREEN);
-  ST7735_OutString((char *)"Btn1: Return to menu");
-  ST7735_SetTextColor(ST7735_WHITE);
+  ST7735_OutString((char *)"Press btn to return");
 }
 
 // Initialize the game
