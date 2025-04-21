@@ -78,57 +78,41 @@ void Sound_Start(const uint8_t *pt, uint32_t count){
     isPlaying = true;
     SysTick->CTRL = 0x07; // Enable SysTick with interrupt
   }
-  if(pt != nullptr && count > 0){
-    soundPtr = pt;
-    soundLen = count;
-    soundIndex = 0;
-    isPlaying = true;
-    SysTick->CTRL = 0x07; // Enable SysTick with interrupt
-  }
 }
 
 void Sound_Shoot(void){
-  Sound_Start(shoot, sizeof(shoot)/sizeof(shoot[0]));
-  Sound_Start(shoot, sizeof(shoot)/sizeof(shoot[0]));
-}
+  Sound_Start(shoot, sizeof(shoot)/sizeof(shoot[0]));}
 
 
 void Sound_Killed(void){
-  Sound_Start(invaderkilled, sizeof(invaderkilled)/sizeof(invaderkilled[0]));
   Sound_Start(invaderkilled, sizeof(invaderkilled)/sizeof(invaderkilled[0]));
 }
 
 
 void Sound_Explosion(void){
   Sound_Start(explosion, sizeof(explosion)/sizeof(explosion[0]));
-  Sound_Start(explosion, sizeof(explosion)/sizeof(explosion[0]));
 }
 
 void Sound_Fastinvader1(void){
-  Sound_Start(fastinvader1, sizeof(fastinvader1)/sizeof(fastinvader1[0]));
   Sound_Start(fastinvader1, sizeof(fastinvader1)/sizeof(fastinvader1[0]));
 }
 
 
 void Sound_Fastinvader2(void){
   Sound_Start(fastinvader2, sizeof(fastinvader2)/sizeof(fastinvader2[0]));
-  Sound_Start(fastinvader2, sizeof(fastinvader2)/sizeof(fastinvader2[0]));
 }
 
 
 void Sound_Fastinvader3(void){
-  Sound_Start(fastinvader3, sizeof(fastinvader3)/sizeof(fastinvader3[0]));
   Sound_Start(fastinvader3, sizeof(fastinvader3)/sizeof(fastinvader3[0]));
 }
 
 
 void Sound_Fastinvader4(void){
   Sound_Start(fastinvader4, sizeof(fastinvader4)/sizeof(fastinvader4[0]));
-  Sound_Start(fastinvader4, sizeof(fastinvader4)/sizeof(fastinvader4[0]));
 }
 
 
 void Sound_Highpitch(void){
-  Sound_Start(highpitch, sizeof(highpitch)/sizeof(highpitch[0]));
   Sound_Start(highpitch, sizeof(highpitch)/sizeof(highpitch[0]));
 }
