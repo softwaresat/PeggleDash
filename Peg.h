@@ -15,9 +15,13 @@ public:
     uint16_t getH();
     const uint16_t* getImage();
     void updatePeg();
+    bool isDestroyed();
+    
+    // Field to indicate if peg needs to be erased from screen
+    bool needsErase;
 
 private:
     int8_t hits;
 };
 
-#endif 
+#endif

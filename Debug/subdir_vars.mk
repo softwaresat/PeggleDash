@@ -9,7 +9,10 @@ CPP_SRCS += \
 ../Ball.cpp \
 C:/Users/saket/Downloads/MSPM0_ValvanoWare/inc/Clock.cpp \
 C:/Users/saket/Downloads/MSPM0_ValvanoWare/inc/DAC5.cpp \
+<<<<<<< HEAD
 ../GameState.cpp \
+=======
+>>>>>>> master
 ../Hole.cpp \
 ../LED.cpp \
 ../Lab9HMain.cpp \
@@ -117,7 +120,10 @@ CPP_SRCS__QUOTED += \
 "../Ball.cpp" \
 "C:/Users/saket/Downloads/MSPM0_ValvanoWare/inc/Clock.cpp" \
 "C:/Users/saket/Downloads/MSPM0_ValvanoWare/inc/DAC5.cpp" \
+<<<<<<< HEAD
 "../GameState.cpp" \
+=======
+>>>>>>> master
 "../Hole.cpp" \
 "../LED.cpp" \
 "../Lab9HMain.cpp" \
