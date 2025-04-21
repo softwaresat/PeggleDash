@@ -55,6 +55,13 @@ Ball::Ball(uint8_t angle)
     image = ball;
     h = 8;
     w = 8;
+    x = 64 * 256;
+    y = 8 * 256;
+    vx = angleTable[angle][0];
+    vy = angleTable[angle][1]; 
+    image = ball;
+    h = 8;
+    w = 8;
 }
 
 void Ball::moveBall(){

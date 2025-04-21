@@ -27,6 +27,8 @@
 #include "Hole.h"
 #include "Level.h"
 #include "GameState.h"
+#include "Level.h"
+#include "GameState.h"
 
 
 extern "C" void __disable_irq(void);
@@ -71,6 +73,12 @@ void SeedRandom(uint32_t seed) {
   M = seed;
 }
 
+
+
+void SeedRandom(uint32_t seed) {
+  M = seed;
+}
+
 uint32_t Random32(void){
   M = 1664525*M+1013904223;
   return M;
@@ -82,6 +90,7 @@ uint32_t Random(uint32_t n){
 SlidePot Sensor(1500,0); // copy calibration from Lab 7
 uint32_t data;
 uint32_t input;
+Ball* currBall =  new Ball(192);
 Ball* currBall =  new Ball(192);
 Hole* movingHole = new Hole();
 // Always start with level 1
@@ -258,6 +267,7 @@ void TIMG12_IRQHandler(void){uint32_t pos,msg;
     GPIOB->DOUTTGL31_0 = GREEN; // toggle PB27 (minimally intrusive debugging)
     GPIOB->DOUTTGL31_0 = GREEN; // toggle PB27 (minimally intrusive debugging)
 // game engine goes 
+// game engine goes 
     data = Sensor.In();
     input = Switch_In();
     movingHole->moveHole();
@@ -337,6 +347,7 @@ int main1(void){ // main1
   PLL_Init(); // set bus speed
   LaunchPad_Init();
   ST7735_InitPrintf(INITR_REDTAB);
+  ST7735_InitPrintf(INITR_REDTAB);
   ST7735_FillScreen(0x0000);            // set screen to black
   for(int myPhrase=0; myPhrase<= 2; myPhrase++){
     for(int myL=0; myL<= 3; myL++){
@@ -370,6 +381,7 @@ int main2(void){ // main2
   __disable_irq();
   PLL_Init(); // set bus speed
   LaunchPad_Init();
+  ST7735_InitPrintf(INITR_REDTAB);
   ST7735_InitPrintf(INITR_REDTAB);
     //note: if you colors are weird, see different options for
     // ST7735_InitR(INITR_REDTAB); inside ST7735_InitPrintf()
@@ -411,6 +423,7 @@ int main3(void){ // main3
   LED_Init(); // initialize LED
   while(1){
     ST7735_InitPrintf(INITR_REDTAB);
+    ST7735_InitPrintf(INITR_REDTAB);
     //note: if you colors are weird, see different options for
     // ST7735_InitR(INITR_REDTAB); inside ST7735_InitPrintf()
   ST7735_FillScreen(ST7735_BLACK);
@@ -436,11 +449,14 @@ int main4(void){ uint32_t last=0,now;
     now = Switch_In(); // one of your buttons
     if((last == 0)&&(now == 1)){
       Sound_Shoot(); // call one of your sounds
+      Sound_Shoot(); // call one of your sounds
     }
     if((last == 0)&&(now == 2)){
       Sound_Killed(); // call one of your sounds
+      Sound_Killed(); // call one of your sounds
     }
     if((last == 0)&&(now == 4)){
+      Sound_Explosion(); // call one of your sounds
       Sound_Explosion(); // call one of your sounds
     }
     if((last == 0)&&(now == 8)){
@@ -449,8 +465,11 @@ int main4(void){ uint32_t last=0,now;
     // modify this to test all your sounds
     last = now;
     Clock_Delay(800000); // delay ~10ms at 80 MHz
+    last = now;
+    Clock_Delay(800000); // delay ~10ms at 80 MHz
   }
 }
+//hi
 //hi
 // ALL ST7735 OUTPUT MUST OCCUR IN MAIN
 int main(void){ // final main
@@ -458,12 +477,14 @@ int main(void){ // final main
   PLL_Init(); // set bus speed
   LaunchPad_Init();
   ST7735_InitPrintf(INITR_REDTAB);
+  ST7735_InitPrintf(INITR_REDTAB);
   ST7735_FillScreen(ST7735_BLACK);
   Sensor.Init(); // PB18 = ADC1 channel 5, slidepot
   Switch_Init(); // initialize switches
   LED_Init();    // initialize LED
   Sound_Init();  // initialize sound
   TExaS_Init(0,0,&TExaS_LaunchPadLogicPB27PB26); // PB27 and PB26
+  // initialize interrupts on TimerG12 at 30 Hz
   // initialize interrupts on TimerG12 at 30 Hz
   TimerG12_Init();
   TimerG12_IntArm(2666667, 2);
