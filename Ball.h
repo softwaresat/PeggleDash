@@ -7,8 +7,8 @@
 struct Ball: public GameObject {
 public:
    
-    Ball(int32_t angle);               // Constructor
-    void reset(int32_t angle);
+    Ball(uint8_t angle);               // Constructor
+    void reset(uint8_t angle);
     ~Ball();
     
     bool getActive();
@@ -17,17 +17,20 @@ public:
     int32_t getY();
     int16_t getW();
     int16_t getH();
+    void IncrementVY();
     const uint16_t* getImage();
-
+    bool checkCollision(uint16_t objX, uint16_t objY);
+    void bounce(uint16_t objX, uint16_t objY);
     void moveBall();
-    void destroyBall();      // Example method
+    int32_t isqrt(int32_t n);
+    void destroyBall();
+    int8_t angleToIndex();      // Example method
 
 private:
+    int8_t index;
     int32_t vx = 0, vy = 0; // Velocity
-    int32_t angle;
+    int8_t angle;
     bool active;
-    uint16_t tableLength;
-    int32_t angleToIndex(int32_t angle);
 };
 
 #endif 

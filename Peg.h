@@ -6,15 +6,18 @@
 
 struct Peg: public GameObject {
 public:
-    int32_t hits;
-
-    Peg(int32_t x, int32_t y, int32_t hits);              
-    ~Peg();
-    
+    Peg();              
+    ~Peg() = default;
+    void init(int16_t x, int16_t y, int8_t hits, int8_t color);
+    int16_t getX();
+    int16_t getY();
+    uint16_t getW();
+    uint16_t getH();
+    const uint16_t* getImage();
     void updatePeg();
 
 private:
-    
+    int8_t hits;
 };
 
 #endif 

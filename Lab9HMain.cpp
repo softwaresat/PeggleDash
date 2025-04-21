@@ -25,6 +25,8 @@
 #include "Sounds.h"
 #include "Peg.h"
 #include "Hole.h"
+#include "Level.h"
+#include "GameState.h"
 
 
 extern "C" void __disable_irq(void);
@@ -34,7 +36,18 @@ extern "C" void TIMG12_IRQHandler(void);
 #define BUTTON_RIGHT (1 << 1)  // PA16
 #define BUTTON_LEFT  (1 << 2)  // PA27
 #define BUTTON_UP    (1 << 3)  // PA28
+#define FIX 8
 
+// Menu states
+#define MENU_MAIN     0
+#define MENU_INSTRUCT 1
+#define GAME_RUNNING  2
+#define GAME_OVER     3
+
+// Current menu state
+uint8_t menuState = MENU_MAIN;
+uint8_t selectedOption = 0;
+uint8_t maxOptions = 1; // Number of options in main menu (play game and instructions)
 
 // ****note to ECE319K students****
 // the data sheet says the ADC does not work when clock is 80 MHz
@@ -46,6 +59,12 @@ void PLL_Init(void){ // set phase lock loop (PLL)
 }
 
 uint32_t M=1;
+
+
+void SeedRandom(uint32_t seed) {
+  M = seed;
+}
+
 uint32_t Random32(void){
   M = 1664525*M+1013904223;
   return M;
@@ -57,60 +76,167 @@ uint32_t Random(uint32_t n){
 SlidePot Sensor(1500,0); // copy calibration from Lab 7
 uint32_t data;
 uint32_t input;
-Ball* currBall =  new Ball(28);
+Ball* currBall =  new Ball(192);
 Hole* movingHole = new Hole();
+// Always start with level 1
+const int8_t levelSelect = 1;
+Peg pegs[25];
+int8_t pegCount = 0;
+int8_t indexAngle;
+GameState gameState; // Global game state object to track game progress
 
-const uint16_t BlackCoverSprite[256] = {
- 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
- 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
- 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
- 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
- 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
- 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
- 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
- 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
- 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
- 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
- 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
- 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
- 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
- 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
- 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
- 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000
+const uint16_t BlackCoverSprite[64] = {
+ 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
+ 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
+ 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
+ 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 
+ 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 
+ 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 
+ 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 
+ 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 
 };
 
+// Draw the title 
+void DrawTitle() {
+  ST7735_SetCursor(4, 2);
+  ST7735_OutString((char *)"PEGGLE DASH");
+}
+
+// Draw main menu options
+void DrawMainMenu() {
+  ST7735_SetCursor(5, 6);
+  if (selectedOption == 0) {
+    ST7735_OutString((char *)"> Play Game");
+  } else {
+    ST7735_OutString((char *)"  Play Game");
+  }
+  
+  ST7735_SetCursor(5, 8);
+  if (selectedOption == 1) {
+    ST7735_OutString((char *)"> Instructions");
+  } else {
+    ST7735_OutString((char *)"  Instructions");
+  }
+  
+  // Footer
+  ST7735_SetCursor(1, 15);
+  ST7735_OutString((char *)"Press btn to select");
+}
+
+// Draw instructions
+void DrawInstructions() {
+  ST7735_SetCursor(3, 2);
+  ST7735_OutString((char *)"HOW TO PLAY");
+  
+  ST7735_SetCursor(0, 4);
+  ST7735_OutString((char *)"- Use slidepot to aim");
+  
+  ST7735_SetCursor(0, 6);
+  ST7735_OutString((char *)"- Press button to shoot");
+  
+  ST7735_SetCursor(0, 8);
+  ST7735_OutString((char *)"- Hit pegs to score pts");
+  
+  ST7735_SetCursor(0, 10);
+  ST7735_OutString((char *)"- Get ball into bucket");
+  
+  ST7735_SetCursor(0, 12);
+  ST7735_OutString((char *)"- Advance to next lvl");
+  
+  ST7735_SetCursor(4, 15);
+  ST7735_OutString((char *)"Press btn to return");
+}
+
+// Initialize the game
+void InitGame() {
+  // Initialize the game state
+  gameState.resetGame();
+  gameState.setCurrentLevel(levelSelect);
+  
+  // Display initial game stats
+  ST7735_SetCursor(0, 0);
+  ST7735_OutString((char *)"Balls:");
+  ST7735_OutUDec(gameState.getBallsRemaining());
+  ST7735_SetCursor(7, 0);
+  ST7735_OutString((char *)"Score:");
+  ST7735_OutUDec(gameState.getScore());
+  ST7735_SetCursor(15, 0);
+  ST7735_OutString((char *)"Lvl:");
+  ST7735_OutUDec(gameState.getCurrentLevel());
+  
+  Level* level = new Level(levelSelect);
+  ST7735_DrawBitmap(0, 160, level->getImage(), 128, 160);
+  
+  // Generate pegs
+  pegCount = 0;
+  int x = 0;
+  int y = 0;
+  bool found;
+  SeedRandom(TIMG12->COUNTERREGS.CTR);
+  
+  while (pegCount < 25) {
+    found = false;
+    x = Random(113) + 4;
+    y = Random(113) + 24;
+    for (int i = 0; i < pegCount; i++) {
+      if (((x - (pegs[i].getX() >> FIX)) < 16 && (x - (pegs[i].getX() >> FIX)) > -16) && 
+          ((y - (pegs[i].getY() >> FIX)) < 16 && (y - (pegs[i].getY() >> FIX)) > -16)) {
+        found = true;
+        break;
+      }
+    }
+    if (!found) {
+      pegs[pegCount].init(x*256, y*256, 0, Random(3));
+      pegCount++;
+    }
+  }
+  
+  // Draw all pegs
+  for (int i = 0; i < pegCount; i++) {
+    ST7735_DrawBitmap(pegs[i].getX() >> FIX, pegs[i].getY() >> FIX, pegs[i].getImage(), 8, 8);
+  }
+}
 
 // games  engine runs at 30Hz
 void TIMG12_IRQHandler(void){uint32_t pos,msg;
   if((TIMG12->CPU_INT.IIDX) == 1){ // this will acknowledge
     GPIOB->DOUTTGL31_0 = GREEN; // toggle PB27 (minimally intrusive debugging)
     GPIOB->DOUTTGL31_0 = GREEN; // toggle PB27 (minimally intrusive debugging)
-// game engine goes here
+// game engine goes 
     data = Sensor.In();
-    data = Sensor.Convert(data);
-
     input = Switch_In();
-    ST7735_DrawBitmap((int16_t)(currBall->getX()/256), (int16_t)(currBall->getY()/256)+10, BlackCoverSprite, currBall->getW(),currBall->getH());
-    ST7735_DrawBitmap((int16_t)(movingHole->getX()/256), (int16_t)(movingHole->getY()/256)-10, BlackCoverSprite, 16,16);
-
     movingHole->moveHole();
-    ST7735_DrawBitmap((int16_t)(movingHole->getX()/256), (int16_t)(movingHole->getY()/256)-10, movingHole->getImage(), 16,16);
-
-
-    if(!currBall->getActive()){
-          currBall->reset(data);
-        ST7735_DrawBitmap((int16_t)(currBall->getX()/256), (int16_t)(currBall->getY()/256)+10, currBall->getImage(), currBall->getW(),currBall->getH());
+    for (int i = 0; i < pegCount; i++) {
+      if (currBall->checkCollision(pegs[i].getX(), pegs[i].getY())) {
+        currBall->bounce(pegs[i].getX(), pegs[i].getY());
+        // Award points when hitting pegs
+        gameState.addPoints(10);
+        // Play sound when hitting pegs
+        Sound_Fastinvader1();
+        //indexAngle = currBall->angleToIndex();
+        break;
+      }
     }
     
-    if(!currBall->getActive() && (input & BUTTON_DOWN) == BUTTON_DOWN){
-        currBall->setActive();
-        ST7735_DrawBitmap((int16_t)(currBall->getX()/256), (int16_t)(currBall->getY()/256), currBall->getImage(), currBall->getW(),currBall->getH());
-    } else if(currBall->getActive()){
-      currBall->moveBall();
-        ST7735_DrawBitmap((int16_t)(currBall->getX()/256), (int16_t)(currBall->getY()/256), currBall->getImage(), currBall->getW(),currBall->getH());
+    // Check if ball falls into hole
+    if (currBall->checkHoleCollision(movingHole->getX(), movingHole->getY())) {
+      // Award bonus points for getting ball in hole
+      gameState.addPoints(50);
+      // Play sound when scoring
+      Sound_Killed();
     }
-
-
+    
+    // Check if ball is lost (e.g., off screen)
+    if (currBall->isLost()) {
+      gameState.useBall();
+      // Only reset if we still have balls left
+      if (!gameState.isGameOver()) {
+        currBall->reset(192); // Reset with default angle
+      }
+    }
+    
+    //currBall->reset(indexAngle);
+    currBall->moveBall();
     // 1) sample slide pot
     // 2) read input switches
     // 3) move sprites
@@ -150,7 +276,7 @@ int main1(void){ // main1
   __disable_irq();
   PLL_Init(); // set bus speed
   LaunchPad_Init();
-  ST7735_InitPrintf(INITR_BLACKTAB);
+  ST7735_InitPrintf(INITR_REDTAB);
   ST7735_FillScreen(0x0000);            // set screen to black
   for(int myPhrase=0; myPhrase<= 2; myPhrase++){
     for(int myL=0; myL<= 3; myL++){
@@ -184,7 +310,7 @@ int main2(void){ // main2
   __disable_irq();
   PLL_Init(); // set bus speed
   LaunchPad_Init();
-  ST7735_InitPrintf(INITR_BLACKTAB);
+  ST7735_InitPrintf(INITR_REDTAB);
     //note: if you colors are weird, see different options for
     // ST7735_InitR(INITR_REDTAB); inside ST7735_InitPrintf()
   ST7735_FillScreen(ST7735_BLACK);
@@ -224,7 +350,7 @@ int main3(void){ // main3
   Switch_Init(); // initialize switches
   LED_Init(); // initialize LED
   while(1){
-    ST7735_InitPrintf(INITR_BLACKTAB);
+    ST7735_InitPrintf(INITR_REDTAB);
     //note: if you colors are weird, see different options for
     // ST7735_InitR(INITR_REDTAB); inside ST7735_InitPrintf()
   ST7735_FillScreen(ST7735_BLACK);
@@ -249,26 +375,29 @@ int main4(void){ uint32_t last=0,now;
   while(1){
     now = Switch_In(); // one of your buttons
     if((last == 0)&&(now == 1)){
-      // Sound_Shoot(levelOne); // call one of your sounds
+      Sound_Shoot(); // call one of your sounds
     }
     if((last == 0)&&(now == 2)){
-      // Sound_Killed(levelTwo); // call one of your sounds
+      Sound_Killed(); // call one of your sounds
     }
     if((last == 0)&&(now == 4)){
-      // Sound_Explosion(levelThree); // call one of your sounds
+      Sound_Explosion(); // call one of your sounds
     }
     if((last == 0)&&(now == 8)){
       Sound_Fastinvader1(); // call one of your sounds
     }
     // modify this to test all your sounds
+    last = now;
+    Clock_Delay(800000); // delay ~10ms at 80 MHz
   }
 }
+//hi
 // ALL ST7735 OUTPUT MUST OCCUR IN MAIN
 int main(void){ // final main
   __disable_irq();
   PLL_Init(); // set bus speed
   LaunchPad_Init();
-  ST7735_InitPrintf(INITR_BLACKTAB);
+  ST7735_InitPrintf(INITR_REDTAB);
     //note: if you colors are weird, see different options for
     // ST7735_InitR(INITR_REDTAB); inside ST7735_InitPrintf()
   ST7735_FillScreen(ST7735_BLACK);
@@ -277,23 +406,176 @@ int main(void){ // final main
   LED_Init();    // initialize LED
   Sound_Init();  // initialize sound
   TExaS_Init(0,0,&TExaS_LaunchPadLogicPB27PB26); // PB27 and PB26
-    // initialize interrupts on TimerG12 at 30 Hz
+  // initialize interrupts on TimerG12 at 30 Hz
   TimerG12_Init();
   TimerG12_IntArm(2666667, 2);
   // initialize all data structures
   __enable_irq();
-    // ST7735_DrawBitmap(22, 159, PlayerShip0, 18,8); // player ship bottom
-
-  ST7735_DrawBitmap(currBall->getX()/256, currBall->getY()/256, currBall->getImage(), currBall->getW(),currBall->getH());
-
-while(1){
-    // data = Sensor.In();
-    // data = Sensor.Convert(data);
-    // currBall->reset(data);
-    // ST7735_DrawBitmap(currBall->getX(), currBall->getY(), currBall->getImage(), currBall->getW(),currBall->getH());
-    // wait for semaphore
-       // clear semaphore
-       // update ST7735R
-    // check for end game or level switch
+  
+  // Play startup sound
+  Sound_Shoot();
+  
+  // Draw title screen
+  DrawTitle();
+  DrawMainMenu();
+  
+  uint32_t lastInput = 0;
+  uint32_t currentInput = 0;
+  Level* level = nullptr;
+  
+  // Main game loop
+  while(1) {
+    currentInput = Switch_In();
+    
+    // Process button inputs for menu navigation
+    if (lastInput != currentInput) {
+      if (menuState == MENU_MAIN) {
+        // Main Menu Controls
+        if (currentInput == BUTTON_DOWN && selectedOption < maxOptions) {
+          selectedOption++;
+          DrawMainMenu();
+        } else if (currentInput == BUTTON_UP && selectedOption > 0) {
+          selectedOption--;
+          DrawMainMenu();
+        } else if (currentInput > 0) { // Any button press
+          // Option selected
+          Sound_Shoot(); // Selection sound
+          
+          if (selectedOption == 0) {
+            // Start Game
+            menuState = GAME_RUNNING;
+            ST7735_FillScreen(ST7735_BLACK);
+            InitGame();
+          } else if (selectedOption == 1) {
+            // Show Instructions
+            menuState = MENU_INSTRUCT;
+            ST7735_FillScreen(ST7735_BLACK);
+            DrawInstructions();
+          }
+        }
+      } else if (menuState == MENU_INSTRUCT) {
+        // Instructions Screen Controls
+        if (currentInput > 0) {
+          // Return to main menu
+          menuState = MENU_MAIN;
+          ST7735_FillScreen(ST7735_BLACK);
+          DrawTitle();
+          DrawMainMenu();
+        }
+      } else if (menuState == GAME_RUNNING) {
+        // In-game controls
+        
+        // Handle return to menu from game (if needed)
+        if (currentInput == 8) { // Adjust as needed for your specific button setup
+          menuState = MENU_MAIN;
+          ST7735_FillScreen(ST7735_BLACK);
+          DrawTitle();
+          DrawMainMenu();
+          if (level != nullptr) {
+            delete level;
+            level = nullptr;
+          }
+        }
+      } else if (menuState == GAME_OVER) {
+        // Game Over Screen Controls
+        if (currentInput > 0) {
+          // Return to main menu
+          menuState = MENU_MAIN;
+          ST7735_FillScreen(ST7735_BLACK);
+          DrawTitle();
+          DrawMainMenu();
+        }
+      }
+    }
+    
+    // Game state processing
+    if (menuState == GAME_RUNNING) {
+      data = Sensor.Convert(data);
+      
+      // Update game stats display
+      ST7735_SetCursor(0, 0);
+      ST7735_OutString((char *)"Balls:");
+      ST7735_OutUDec(gameState.getBallsRemaining());
+      ST7735_SetCursor(7, 0);
+      ST7735_OutString((char *)"Score:");
+      ST7735_OutUDec(gameState.getScore());
+      ST7735_SetCursor(15, 0);
+      ST7735_OutString((char *)"Lvl:");
+      ST7735_OutUDec(gameState.getCurrentLevel());
+      
+      // Draw current game elements
+      ST7735_DrawBitmap(currBall->getX() >> FIX, currBall->getY() >> FIX, currBall->getImage(), 8, 8);
+      ST7735_DrawBitmap(movingHole->getX() >> FIX, movingHole->getY() >> FIX, movingHole->getImage(), 48, 24);
+      
+      // Check for game over
+      if (gameState.isGameOver()) {
+        menuState = GAME_OVER;
+        ST7735_FillScreen(ST7735_BLACK);
+        ST7735_SetCursor(5, 5);
+        ST7735_OutString((char *)"GAME OVER");
+        ST7735_SetCursor(3, 7);
+        ST7735_OutString((char *)"Final Score:");
+        ST7735_SetCursor(6, 9);
+        ST7735_OutUDec(gameState.getScore());
+        
+        ST7735_SetCursor(1, 15);
+        ST7735_OutString((char *)"Press any button to continue");
+      }
+      
+      // Handle level advancement
+      if (gameState.getScore() >= (gameState.getCurrentLevel() * 500)) {
+        gameState.nextLevel();
+        // Load the next level, reset ball, etc.
+        ST7735_FillScreen(ST7735_BLACK);
+        
+        // Load new level
+        if (level != nullptr) {
+          delete level;
+        }
+        level = new Level(gameState.getCurrentLevel());
+        
+        // Draw new level
+        ST7735_DrawBitmap(0, 160, level->getImage(), 128, 160);
+        
+        // Reset pegs
+        pegCount = 0;
+        
+        // Generate new pegs for next level
+        int x = 0;
+        int y = 0;
+        bool found = false;
+        
+        while (pegCount < 25) {
+          found = false;
+          x = Random(113) + 4;
+          y = Random(113) + 24;
+          for (int i = 0; i < pegCount; i++) {
+            if (((x - (pegs[i].getX() >> FIX)) < 16 && (x - (pegs[i].getX() >> FIX)) > -16) && 
+                ((y - (pegs[i].getY() >> FIX)) < 16 && (y - (pegs[i].getY() >> FIX)) > -16)) {
+              found = true;
+              break;
+            }
+          }
+          if (!found) {
+            pegs[pegCount].init(x*256, y*256, 0, Random(3));
+            pegCount++;
+          }
+        }
+        
+        // Draw new pegs
+        for (int i = 0; i < pegCount; i++) {
+          ST7735_DrawBitmap(pegs[i].getX() >> FIX, pegs[i].getY() >> FIX, pegs[i].getImage(), 8, 8);
+        }
+        
+        // Reset ball
+        currBall->reset(192);
+        
+        // Play level-up sound
+        Sound_Explosion();
+      }
+    }
+    
+    lastInput = currentInput;
+    Clock_Delay(100000); // Delay to prevent button bounce
   }
 }
