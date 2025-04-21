@@ -53,7 +53,8 @@ void Peg::init(int16_t x, int16_t y, int8_t hits, int8_t color) {
 
     if (color == 1) {
         image = orangepeg;
-    } else {
+    } 
+    else {
         image = bluepeg;
     }
 }

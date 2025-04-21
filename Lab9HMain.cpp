@@ -243,14 +243,14 @@ void InitGame() {
     x = Random(113) + 4;
     y = Random(113) + 24;
     for (int i = 0; i < pegCount; i++) {
-      if (((x - (pegs[i].getX() >> FIX)) < 16 && (x - (pegs[i].getX() >> FIX)) > -16) && 
-          ((y - (pegs[i].getY() >> FIX)) < 16 && (y - (pegs[i].getY() >> FIX)) > -16)) {
+      if (((x - (pegs[i].getX() >> FIX)) < 10 && (x - (pegs[i].getX() >> FIX)) > -10) && 
+          ((y - (pegs[i].getY() >> FIX)) < 10 && (y - (pegs[i].getY() >> FIX)) > -10)) {
         found = true;
         break;
       }
     }
     if (!found) {
-      pegs[pegCount].init(x*256, y*256, 0, Random(3));
+      pegs[pegCount].init(x*256, y*256, 0, Random(2));
       pegCount++;
     }
   }
@@ -658,8 +658,8 @@ int main(void){ // final main
           x = Random(113) + 4;
           y = Random(113) + 24;
           for (int i = 0; i < pegCount; i++) {
-            if (((x - (pegs[i].getX() >> FIX)) < 16 && (x - (pegs[i].getX() >> FIX)) > -16) && 
-                ((y - (pegs[i].getY() >> FIX)) < 16 && (y - (pegs[i].getY() >> FIX)) > -16)) {
+            if (((x - (pegs[i].getX() >> FIX)) < 10 && (x - (pegs[i].getX() >> FIX)) > -10) && 
+                ((y - (pegs[i].getY() >> FIX)) < 10 && (y - (pegs[i].getY() >> FIX)) > -10)) {
               found = true;
               break;
             }
