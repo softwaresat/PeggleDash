@@ -78,6 +78,12 @@ void SeedRandom(uint32_t seed) {
   M = seed;
 }
 
+
+
+void SeedRandom(uint32_t seed) {
+  M = seed;
+}
+
 uint32_t Random32(void){
   M = 1664525*M+1013904223;
   return M;
@@ -89,6 +95,7 @@ uint32_t Random(uint32_t n){
 SlidePot Sensor(1500,0); // copy calibration from Lab 7
 uint32_t data;
 uint32_t input;
+Ball* currBall =  new Ball(192);
 Ball* currBall =  new Ball(192);
 Hole* movingHole = new Hole();
 // Always start with level 1
@@ -142,7 +149,7 @@ void DrawMainMenu() {
   // Add menu option box outlines
   ST7735_FillRect(15, 44, 98, 16, ST7735_CYAN);
   ST7735_FillRect(15, 67, 98, 16, ST7735_CYAN);
-  
+
   // Handle selection highlighting
   if (selectedOption == 0) {
     ST7735_FillRect(16, 45, 96, 14, ST7735_BLUE);
@@ -200,24 +207,28 @@ void DrawInstructions() {
   // Instruction 1
   ST7735_FillRect(2, 28, 124, 16, ST7735_BLUE);
   ST7735_FillRect(2, 28, 124, 16, ST7735_CYAN);
+
   ST7735_SetCursor(1, 4);
   ST7735_OutString((char *)"Use slidepot to aim");
   
   // Instruction 2
   ST7735_FillRect(2, 51, 124, 16, ST7735_BLUE);
   ST7735_FillRect(2, 51, 124, 16, ST7735_CYAN);
+
   ST7735_SetCursor(1, 7);
   ST7735_OutString((char *)"Press button to shoot");
   
   // Instruction 3
   ST7735_FillRect(2, 74, 124, 16, ST7735_BLUE);
   ST7735_FillRect(2, 74, 124, 16, ST7735_CYAN);
+
   ST7735_SetCursor(1, 10);
   ST7735_OutString((char *)"Hit pegs to score pts");
   
   // Instruction 4
   ST7735_FillRect(2, 97, 124, 16, ST7735_BLUE);
   ST7735_FillRect(2, 97, 124, 16, ST7735_CYAN);
+
   ST7735_SetCursor(1, 13);
   ST7735_OutString((char *)"Get ball into bucket");
   
@@ -753,6 +764,7 @@ int main(void){ // final main
         // Draw score frame
         ST7735_FillRect(24, 50, 80, 40, ST7735_BLUE);
         ST7735_FillRect(25, 51, 78, 38, ST7735_CYAN);
+
         
         // Display final score heading
         ST7735_SetTextColor(MENU_HEADER_COLOR);
