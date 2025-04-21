@@ -26,6 +26,7 @@
 #include "Peg.h"
 #include "Hole.h"
 #include "Level.h"
+#include "GameState.h"
 
 
 extern "C" void __disable_irq(void);
@@ -70,6 +71,7 @@ int8_t levelSelect = 1;
 Peg pegs[25];
 int8_t pegCount = 0;
 int8_t indexAngle;
+GameState gameState; // Global game state object to track game progress
 
 const uint16_t BlackCoverSprite[64] = {
  0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -95,10 +97,32 @@ void TIMG12_IRQHandler(void){uint32_t pos,msg;
     for (int i = 0; i < pegCount; i++) {
       if (currBall->checkCollision(pegs[i].getX(), pegs[i].getY())) {
         currBall->bounce(pegs[i].getX(), pegs[i].getY());
+        // Award points when hitting pegs
+        gameState.addPoints(10);
+        // Play sound when hitting pegs
+        Sound_Fastinvader1();
         //indexAngle = currBall->angleToIndex();
         break;
       }
     }
+    
+    // Check if ball falls into hole
+    if (currBall->checkHoleCollision(movingHole->getX(), movingHole->getY())) {
+      // Award bonus points for getting ball in hole
+      gameState.addPoints(50);
+      // Play sound when scoring
+      Sound_Killed();
+    }
+    
+    // Check if ball is lost (e.g., off screen)
+    if (currBall->isLost()) {
+      gameState.useBall();
+      // Only reset if we still have balls left
+      if (!gameState.isGameOver()) {
+        currBall->reset(192); // Reset with default angle
+      }
+    }
+    
     //currBall->reset(indexAngle);
     currBall->moveBall();
     // 1) sample slide pot
@@ -239,18 +263,20 @@ int main4(void){ uint32_t last=0,now;
   while(1){
     now = Switch_In(); // one of your buttons
     if((last == 0)&&(now == 1)){
-      // Sound_Shoot(levelOne); // call one of your sounds
+      Sound_Shoot(); // call one of your sounds
     }
     if((last == 0)&&(now == 2)){
-      // Sound_Killed(levelTwo); // call one of your sounds
+      Sound_Killed(); // call one of your sounds
     }
     if((last == 0)&&(now == 4)){
-      // Sound_Explosion(levelThree); // call one of your sounds
+      Sound_Explosion(); // call one of your sounds
     }
     if((last == 0)&&(now == 8)){
       Sound_Fastinvader1(); // call one of your sounds
     }
     // modify this to test all your sounds
+    last = now;
+    Clock_Delay(800000); // delay ~10ms at 80 MHz
   }
 }
 //hi
@@ -276,6 +302,21 @@ int main(void){ // final main
 
   
   //Prompt user for level select
+  // Initialize the game state
+  gameState.resetGame();
+  gameState.setCurrentLevel(levelSelect);
+  
+  // Display initial game stats
+  ST7735_SetCursor(0, 0);
+  ST7735_OutString((char *)"Balls:");
+  ST7735_OutUDec(gameState.getBallsRemaining());
+  ST7735_SetCursor(7, 0);
+  ST7735_OutString((char *)"Score:");
+  ST7735_OutUDec(gameState.getScore());
+  ST7735_SetCursor(15, 0);
+  ST7735_OutString((char *)"Lvl:");
+  ST7735_OutUDec(gameState.getCurrentLevel());
+  
   //if (levelSelect == 1) {
   Level* level = new Level(1);
   //} else {
@@ -306,11 +347,118 @@ int main(void){ // final main
   }
 while(1){
     data = Sensor.Convert(data);
+    
+    // Update game stats display
+    ST7735_SetCursor(0, 0);
+    ST7735_OutString((char *)"Balls:");
+    ST7735_OutUDec(gameState.getBallsRemaining());
+    ST7735_SetCursor(7, 0);
+    ST7735_OutString((char *)"Score:");
+    ST7735_OutUDec(gameState.getScore());
+    ST7735_SetCursor(15, 0);
+    ST7735_OutString((char *)"Lvl:");
+    ST7735_OutUDec(gameState.getCurrentLevel());
+    
+    // Draw current game elements
     ST7735_DrawBitmap(currBall->getX() >> FIX, currBall->getY() >> FIX, currBall->getImage(), 8, 8);
     ST7735_DrawBitmap(movingHole->getX() >> FIX, movingHole->getY() >> FIX, movingHole->getImage(), 48, 24);
+    
+    // Check for game over
+    if (gameState.isGameOver()) {
+      ST7735_FillScreen(ST7735_BLACK);
+      ST7735_SetCursor(1, 1);
+      ST7735_OutString((char *)"GAME OVER");
+      ST7735_SetCursor(1, 3);
+      ST7735_OutString((char *)"Final Score:");
+      ST7735_SetCursor(1, 4);
+      ST7735_OutUDec(gameState.getScore());
+      
+      // Wait for button press to restart
+      while(Switch_In() == 0) {
+        // Wait for button press
+      }
+      
+      // Reset game
+      gameState.resetGame();
+      pegCount = 0;
+      currBall->reset(192);
+      ST7735_FillScreen(ST7735_BLACK);
+      
+      // Redraw level and pegs
+      ST7735_DrawBitmap(0, 160, level->getImage(), 128, 160);
+      
+      // Regenerate pegs
+      while (pegCount < 25) {
+        found = false;
+        x = Random(113) + 4;
+        y = Random(113) + 24;
+        for (int i = 0; i < pegCount; i++) {
+          if (((x - (pegs[i].getX() >> FIX)) < 16 && (x - (pegs[i].getX() >> FIX)) > -16) && ((y - (pegs[i].getY() >> FIX)) < 16 && (y - (pegs[i].getY() >> FIX)) > -16)) {
+            found = true;
+            break;
+          }
+        }
+        if (!found) {
+          pegs[pegCount].init(x*256, y*256, 0, Random(3));
+          pegCount++;
+        }
+      }
+      
+      // Draw pegs
+      for (int i = 0; i < pegCount; i++) {
+        ST7735_DrawBitmap(pegs[i].getX() >> FIX, pegs[i].getY() >> FIX, pegs[i].getImage(), 8, 8);
+      }
+    }
+    
+    // Handle level advancement (could be triggered by specific conditions)
+    // For example, if all pegs are hit or a certain score is reached
+    if (gameState.getScore() >= (gameState.getCurrentLevel() * 500)) {
+      gameState.nextLevel();
+      // Load the next level, reset ball, etc.
+      ST7735_FillScreen(ST7735_BLACK);
+      
+      // Load new level
+      delete level;
+      level = new Level(gameState.getCurrentLevel());
+      
+      // Draw new level
+      ST7735_DrawBitmap(0, 160, level->getImage(), 128, 160);
+      
+      // Reset pegs
+      pegCount = 0;
+      
+      // Generate new pegs for next level
+      while (pegCount < 25) {
+        found = false;
+        x = Random(113) + 4;
+        y = Random(113) + 24;
+        for (int i = 0; i < pegCount; i++) {
+          if (((x - (pegs[i].getX() >> FIX)) < 16 && (x - (pegs[i].getX() >> FIX)) > -16) && 
+              ((y - (pegs[i].getY() >> FIX)) < 16 && (y - (pegs[i].getY() >> FIX)) > -16)) {
+            found = true;
+            break;
+          }
+        }
+        if (!found) {
+          pegs[pegCount].init(x*256, y*256, 0, Random(3));
+          pegCount++;
+        }
+      }
+      
+      // Draw new pegs
+      for (int i = 0; i < pegCount; i++) {
+        ST7735_DrawBitmap(pegs[i].getX() >> FIX, pegs[i].getY() >> FIX, pegs[i].getImage(), 8, 8);
+      }
+      
+      // Reset ball
+      currBall->reset(192);
+      
+      // Play level-up sound
+      Sound_Fastinvader1();
+    }
+    
     // wait for semaphore
-       // clear semaphore
-       // update ST7735R
-    // check for end game or level switch
+    // clear semaphore
+    // update ST7735R
   }
 }
