@@ -74,8 +74,6 @@ void PLL_Init(void){ // set phase lock loop (PLL)
 }
 
 uint32_t M=1;
-
-
 void SeedRandom(uint32_t seed) {
   M = seed;
 }
@@ -149,9 +147,9 @@ void DrawMainMenu() {
   ST7735_FillRect(15, 67, 98, 16, ST7735_BLUE);
   
   // Add menu option box outlines
-  ST7735_DrawRect(15, 44, 98, 16, ST7735_CYAN);
-  ST7735_DrawRect(15, 67, 98, 16, ST7735_CYAN);
-  
+  ST7735_FillRect(15, 44, 98, 16, ST7735_CYAN);
+  ST7735_FillRect(15, 67, 98, 16, ST7735_CYAN);
+
   // Handle selection highlighting
   if (selectedOption == 0) {
     ST7735_FillRect(16, 45, 96, 14, ST7735_BLUE);
@@ -208,25 +206,29 @@ void DrawInstructions() {
   // Draw instruction points with highlight boxes
   // Instruction 1
   ST7735_FillRect(2, 28, 124, 16, ST7735_BLUE);
-  ST7735_DrawRect(2, 28, 124, 16, ST7735_CYAN);
+  ST7735_FillRect(2, 28, 124, 16, ST7735_CYAN);
+
   ST7735_SetCursor(1, 4);
   ST7735_OutString((char *)"Use slidepot to aim");
   
   // Instruction 2
   ST7735_FillRect(2, 51, 124, 16, ST7735_BLUE);
-  ST7735_DrawRect(2, 51, 124, 16, ST7735_CYAN);
+  ST7735_FillRect(2, 51, 124, 16, ST7735_CYAN);
+
   ST7735_SetCursor(1, 7);
   ST7735_OutString((char *)"Press button to shoot");
   
   // Instruction 3
   ST7735_FillRect(2, 74, 124, 16, ST7735_BLUE);
-  ST7735_DrawRect(2, 74, 124, 16, ST7735_CYAN);
+  ST7735_FillRect(2, 74, 124, 16, ST7735_CYAN);
+
   ST7735_SetCursor(1, 10);
   ST7735_OutString((char *)"Hit pegs to score pts");
   
   // Instruction 4
   ST7735_FillRect(2, 97, 124, 16, ST7735_BLUE);
-  ST7735_DrawRect(2, 97, 124, 16, ST7735_CYAN);
+  ST7735_FillRect(2, 97, 124, 16, ST7735_CYAN);
+
   ST7735_SetCursor(1, 13);
   ST7735_OutString((char *)"Get ball into bucket");
   
@@ -325,9 +327,15 @@ void InitGame() {
     found = false;
     x = Random(113) + 4;
     y = Random(113) + 24;
+    if (x < 0) {
+      x = -x;
+    } 
+    if (y < 0) {
+      y = -y;
+    }
     for (int i = 0; i < pegCount; i++) {
-      if (((x - (pegs[i].getX() >> FIX)) < 10 && (x - (pegs[i].getX() >> FIX)) > -10) && 
-          ((y - (pegs[i].getY() >> FIX)) < 10 && (y - (pegs[i].getY() >> FIX)) > -10)) {
+      if (((x - (pegs[i].getX() >> FIX)) < 12 && (x - (pegs[i].getX() >> FIX)) > -12) && 
+          ((y - (pegs[i].getY() >> FIX)) < 12 && (y - (pegs[i].getY() >> FIX)) > -12)) {
         found = true;
         break;
       }
@@ -754,8 +762,9 @@ int main(void){ // final main
         ST7735_DrawFastHLine(20, 21, 88, ST7735_RED);
         
         // Draw score frame
-        ST7735_DrawRect(24, 50, 80, 40, ST7735_BLUE);
-        ST7735_DrawRect(25, 51, 78, 38, ST7735_CYAN);
+        ST7735_FillRect(24, 50, 80, 40, ST7735_BLUE);
+        ST7735_FillRect(25, 51, 78, 38, ST7735_CYAN);
+
         
         // Display final score heading
         ST7735_SetTextColor(MENU_HEADER_COLOR);
@@ -808,10 +817,16 @@ int main(void){ // final main
         while (pegCount < 25) {
           found = false;
           x = Random(113) + 4;
-          y = Random(113) + 24;
+          y = Random(104) + 24;
+          if (x < 0) {
+            x = -x;
+          } 
+          if (y < 0) {
+            y = -y;
+          } 
           for (int i = 0; i < pegCount; i++) {
-            if (((x - (pegs[i].getX() >> FIX)) < 10 && (x - (pegs[i].getX() >> FIX)) > -10) && 
-                ((y - (pegs[i].getY() >> FIX)) < 10 && (y - (pegs[i].getY() >> FIX)) > -10)) {
+            if (((x - (pegs[i].getX() >> FIX)) < 12 && (x - (pegs[i].getX() >> FIX)) > -12) && 
+                ((y - (pegs[i].getY() >> FIX)) < 12 && (y - (pegs[i].getY() >> FIX)) > -12)) {
               found = true;
               break;
             }

@@ -45,7 +45,7 @@ Peg::Peg() {
     h = 8;
 }
 
-void Peg::init(int16_t x, int16_t y, int8_t hits, int8_t color) {
+void Peg::init(int32_t x, int32_t y, int8_t hits, int8_t color) {
     this->x = x;
     this->y = y;
     this->hits = 1; // Initialize with 1 hit to destroy
@@ -61,11 +61,11 @@ void Peg::init(int16_t x, int16_t y, int8_t hits, int8_t color) {
     }
 }
 
-int16_t Peg::getX(){
+int32_t Peg::getX(){
     return x;
 }
 
-int16_t Peg::getY(){
+int32_t Peg::getY(){
     return y;
 }
 

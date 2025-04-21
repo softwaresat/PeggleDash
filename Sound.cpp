@@ -27,6 +27,7 @@ bool isPlaying = false;
 // initialize a 11kHz SysTick, however no sound should be started
 // Initialize the 5 bit DAC
 void Sound_Init(void){
+  
   DAC5_Init(); // Initialize the DAC
   
   uint32_t period = 7273; // For 11kHz sampling rate
