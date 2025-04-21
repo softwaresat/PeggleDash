@@ -398,8 +398,6 @@ int main(void){ // final main
   PLL_Init(); // set bus speed
   LaunchPad_Init();
   ST7735_InitPrintf(INITR_REDTAB);
-    //note: if you colors are weird, see different options for
-    // ST7735_InitR(INITR_REDTAB); inside ST7735_InitPrintf()
   ST7735_FillScreen(ST7735_BLACK);
   Sensor.Init(); // PB18 = ADC1 channel 5, slidepot
   Switch_Init(); // initialize switches
@@ -437,7 +435,7 @@ int main(void){ // final main
         } else if (currentInput == BUTTON_UP && selectedOption > 0) {
           selectedOption--;
           DrawMainMenu();
-        } else if (currentInput > 0) { // Any button press
+        } else if (currentInput > 0) { // Any button press for selection
           // Option selected
           Sound_Shoot(); // Selection sound
           
@@ -446,6 +444,14 @@ int main(void){ // final main
             menuState = GAME_RUNNING;
             ST7735_FillScreen(ST7735_BLACK);
             InitGame();
+            
+            // Important: Make sure we initialize the ball and hole correctly
+            currBall->reset(192);
+            
+            // Log to help debug
+            ST7735_SetCursor(0, 14);
+            ST7735_OutString((char *)"Game starting...");
+            Clock_Delay1ms(500); // Short delay to see the message
           } else if (selectedOption == 1) {
             // Show Instructions
             menuState = MENU_INSTRUCT;
@@ -486,6 +492,9 @@ int main(void){ // final main
           DrawMainMenu();
         }
       }
+      
+      // Update last input after processing
+      lastInput = currentInput;
     }
     
     // Game state processing
@@ -575,7 +584,6 @@ int main(void){ // final main
       }
     }
     
-    lastInput = currentInput;
     Clock_Delay(100000); // Delay to prevent button bounce
   }
 }

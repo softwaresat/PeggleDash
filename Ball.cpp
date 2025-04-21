@@ -175,6 +175,27 @@ bool Ball::checkCollision(uint16_t objX, uint16_t objY) {
     return (dx * dx + dy * dy < radiusSum * radiusSum);
 }
 
+bool Ball::checkHoleCollision(uint16_t holeX, uint16_t holeY) {
+    int32_t ballX = x >> 8;
+    int32_t ballY = y >> 8;
+    int32_t bucketX = holeX >> 8;
+    int32_t bucketY = holeY >> 8;
+    
+    // The bucket/hole is larger than pegs, so use a larger radius check
+    // Check if ball is entering the top part of the bucket
+    if (ballX >= bucketX + 12 && ballX <= bucketX + 36 && 
+        ballY >= bucketY - 4 && ballY <= bucketY + 4) {
+        return true;
+    }
+    
+    return false;
+}
+
+bool Ball::isLost() {
+    // Ball is lost if it goes below the bottom of the screen
+    return ((y >> 8) > 160);
+}
+
 bool Ball::getActive(){
     return active;
 }
