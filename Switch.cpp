@@ -9,10 +9,10 @@
 // LaunchPad.h defines all the indices into the PINCM table
 void Switch_Init(void){
     // Enable pull-up resistors on switch inputs (bits 7-4 = 0010 for pull-up)
-    IOMUX->SECCFG.PINCM[PA28INDEX] = 0x00040081; // input with pull-up
-    IOMUX->SECCFG.PINCM[PA27INDEX] = 0x00040081; // input with pull-up
-    IOMUX->SECCFG.PINCM[PA16INDEX] = 0x00040081; // input with pull-up
-    IOMUX->SECCFG.PINCM[PA15INDEX] = 0x00040081; // input with pull-up
+    IOMUX->SECCFG.PINCM[PA28INDEX] = 0x00050081; // input with pull-up
+    IOMUX->SECCFG.PINCM[PA27INDEX] = 0x00050081; // input with pull-up
+    IOMUX->SECCFG.PINCM[PA16INDEX] = 0x00050081; // input with pull-up
+    IOMUX->SECCFG.PINCM[PA15INDEX] = 0x00050081; // input with pull-up
 }
 // return current state of switches
 uint32_t Switch_In(void){
