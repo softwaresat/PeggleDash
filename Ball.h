@@ -10,7 +10,7 @@ public:
     Ball(uint8_t angle);               // Constructor
     void reset(uint8_t angle);
     ~Ball();
-    
+    void Aim(uint32_t data);
     bool getActive();
     void setActive();
     void setActive(bool isActive); // Set active to specified state

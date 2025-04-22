@@ -8,11 +8,12 @@ struct Peg: public GameObject {
 public:
     Peg();              
     ~Peg() = default;
-    void init(int32_t x, int32_t y, int8_t hits, int8_t color);
+    void init(int32_t x, int32_t y, int8_t hits, uint8_t color);
     int32_t getX();
     int32_t getY();
     uint16_t getW();
     uint16_t getH();
+    uint8_t getColor();
     bool getHitState();
     const uint16_t* getImage();
     void updatePeg();
@@ -25,7 +26,7 @@ public:
 
 private:
     int8_t hits;
-    int8_t color; // Store the peg color for getting the right hit image
+    uint8_t color; // Store the peg color for getting the right hit image
     bool isHit;   // Flag to track if the peg is in "hit" state
 };
 
