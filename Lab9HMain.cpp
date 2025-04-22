@@ -357,20 +357,6 @@ void DrawYouWonScreen() {
   Sound_Explosion();
 }
 
-/**
- * Merges a sprite with a background by replacing black pixels in the sprite with background colors
- * NOTE: The x,y coordinates represent the BOTTOM LEFT corner of the sprite
- * 
- * @param destBuffer    Destination buffer in RAM where merged sprite will be stored
- * @param sprite        Source sprite data to be merged with background (uint16_t color values)
- * @param spriteWidth   Width of the sprite in pixels
- * @param spriteHeight  Height of the sprite in pixels
- * @param background    Pointer to background level data in ROM
- * @param bgWidth       Width of the background level in pixels
- * @param x             X position of sprite's BOTTOM LEFT corner in the background
- * @param y             Y position of sprite's BOTTOM LEFT corner in the background
- * @param blackColor    Color value representing black/transparent in the sprite (typically 0)
- */
 void mergeSpriteWithBackground(
     uint16_t* destBuffer,
     const uint16_t* sprite,
@@ -382,36 +368,60 @@ void mergeSpriteWithBackground(
     uint16_t y,
     uint16_t blackColor
 ) {
-    // Adjust y position to account for bottom-left origin
-    // y is the bottom of the sprite, so we need to move up by spriteHeight-1 to get the top
-    uint16_t topY = y - (spriteHeight - 1);
+    // SAFETY CHECK: Ensure destBuffer is valid
+    if (destBuffer == nullptr || sprite == nullptr || background == nullptr) {
+        return;
+    }
+    
+    // Safely handle bottom-left origin conversion to prevent underflow
+    // First convert to signed integers for the calculation
+    int32_t topY = 0;
+    if (y >= (spriteHeight)) {
+        topY = y - (spriteHeight);
+    } else {
+        // If y is too small, clamp to top of screen
+        topY = 0;
+    }
     
     // For each pixel in the sprite
     for (uint16_t sy = 0; sy < spriteHeight; sy++) {
         for (uint16_t sx = 0; sx < spriteWidth; sx++) {
-            // Calculate source index
+            // Calculate source index safely
             uint16_t spriteIndex = sy * spriteWidth + sx;
             
-            // Calculate background index
-            // Add sy to topY to go from top to bottom
-            uint16_t bgIndex = (topY + sy) * bgWidth + (x + sx);
+            // Calculate destination index safely
+            uint32_t destIndex = sy * spriteWidth + sx;
             
-            // Calculate destination index
-            uint16_t destIndex = sy * spriteWidth + sx;
+            // Calculate screen coordinates
+            int32_t screenY = topY + sy;
+            int32_t screenX = x + sx;
             
-            // Get sprite pixel color
-            uint16_t spriteColor = sprite[spriteIndex];
-            
-            // If sprite pixel is black (transparent), use background color
-            // Otherwise use sprite color
-            if (spriteColor == blackColor) {
-                destBuffer[destIndex] = background[bgIndex];
+            // Safety check: is the pixel within screen bounds?
+            if (screenY >= 0 && screenY < 160 && screenX >= 0 && screenX < 128) {
+                // Safe to access background
+                uint32_t bgIndex = screenY * bgWidth + screenX;
+                
+                // Get sprite pixel color
+                uint16_t spriteColor = sprite[spriteIndex];
+                
+                // If sprite pixel is black (transparent), use background color
+                // Otherwise use sprite color
+                if (spriteColor == blackColor) {
+                    destBuffer[destIndex] = background[bgIndex];
+                } else {
+                    destBuffer[destIndex] = spriteColor;
+                }
             } else {
-                destBuffer[destIndex] = spriteColor;
+                // Out of bounds - use sprite color or black
+                uint16_t spriteColor = sprite[spriteIndex];
+                if (spriteColor == blackColor) {
+                    destBuffer[destIndex] = 0x0000; // Use black for out-of-bounds
+                } else {
+                    destBuffer[destIndex] = spriteColor;
+                }
             }
         }
     }
-
 }
 
 // Initialize the game
@@ -484,7 +494,10 @@ void InitGame() {
   
   // Draw all pegs
   for (int i = 0; i < pegCount; i++) {
-    ST7735_DrawBitmap(pegs[i].getX() >> FIX, pegs[i].getY() >> FIX, pegs[i].getImage(), 8, 8);
+    uint16_t* destBuffer = new uint16_t[64] ;
+    mergeSpriteWithBackground(destBuffer, pegs[i].getImage(), pegs[i].getW(), pegs[i].getH(), currentLevel->getImage(), 128, pegs[i].getX() >> 8, pegs[i].getY() >> 8, 0x0000);
+    ST7735_DrawBitmap(pegs[i].getX() >> FIX, pegs[i].getY() >> FIX, destBuffer, 8, 8);
+    delete[] destBuffer;
   }
 }
 
@@ -882,7 +895,10 @@ int main(void){ // final main
       // Clear the previous position of the ball using black sprite
       if (prevBallX >= 0 && prevBallY >= 0 && 
           (prevBallX != currentBallX || prevBallY != currentBallY)) {
-        ST7735_DrawBitmap(prevBallX, prevBallY, BlackCoverSprite, 8, 8);
+        uint16_t* destBuffer = new uint16_t[64] ;
+        mergeSpriteWithBackground(destBuffer, BlackCoverSprite, 8, 8, currentLevel->getImage(), 128, prevBallX, prevBallY, 0x0000);
+        ST7735_DrawBitmap(prevBallX, prevBallY, destBuffer, 8, 8);
+        delete[] destBuffer;
       }
       
       // Check for pegs that need to be erased from the screen
@@ -896,7 +912,10 @@ int main(void){ // final main
           // Reset the flag so we don't erase it again
         }
         if (pegs[i].needsErase && pegs[i].hitTimer == 0) {
-          ST7735_DrawBitmap(pegX, pegY, BlackCoverSprite, 8, 8);
+          uint16_t* destBuffer = new uint16_t[64] ;
+          mergeSpriteWithBackground(destBuffer, BlackCoverSprite, 8, 8, currentLevel->getImage(), 128, pegX, pegY, 0x0000);
+          ST7735_DrawBitmap(pegX, pegY, destBuffer, 8, 8);
+          delete[] destBuffer;
           pegs[i].needsErase = false;
         } 
         
@@ -908,18 +927,24 @@ int main(void){ // final main
       
       // Draw current game elements
       uint16_t* destBuffer = new uint16_t[64] ;
-      mergeSpriteWithBackground(destBuffer, currBall->getImage(), currBall->getW(), currBall->getH(), level->getImage(), 128, currentBallX, currentBallY, 0x0000);
+      mergeSpriteWithBackground(destBuffer, currBall->getImage(), currBall->getW(), currBall->getH(), currentLevel->getImage(), 128, currentBallX, currentBallY, 0x0000);
       ST7735_DrawBitmap(currentBallX, currentBallY, destBuffer, 8, 8);
+      delete[] destBuffer;
       
       // Only draw pegs that aren't destroyed
       for (int i = 0; i < pegCount; i++) {
         if (!pegs[i].isDestroyed()) {
-          ST7735_DrawBitmap(pegs[i].getX() >> FIX, pegs[i].getY() >> FIX, pegs[i].getImage(), 8, 8);
+          uint16_t* destBuffer = new uint16_t[64] ;
+          mergeSpriteWithBackground(destBuffer, pegs[i].getImage(), pegs[i].getW(), pegs[i].getH(), currentLevel->getImage(), 128, pegs[i].getX() >> 8, pegs[i].getY() >> 8, 0x0000);
+          ST7735_DrawBitmap(pegs[i].getX() >> FIX, pegs[i].getY() >> FIX, destBuffer, 8, 8);
+          delete[] destBuffer;
         }
       }
       
-      ST7735_DrawBitmap(movingHole->getX() >> FIX, movingHole->getY() >> FIX, movingHole->getImage(), 48, 24);
-      
+      uint16_t destBuffer2[1152];
+      mergeSpriteWithBackground(destBuffer2, movingHole->getImage(), 48, 24, currentLevel->getImage(), 128, movingHole->getX() >> FIX, movingHole->getY() >> FIX, 0x0000);
+      ST7735_DrawBitmap(movingHole->getX() >> FIX, movingHole->getY() >> FIX, destBuffer2, 48, 24);
+
       // Handle level advancement
       if (gameState.getBallsRemaining() == 0) {
         menuState = GAME_OVER;

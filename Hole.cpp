@@ -93,6 +93,7 @@ Hole::Hole(){
     w = 48;
     image = bucket;
 }
+
 void Hole::reset(){
     x = 0;
     y = 184*256;
