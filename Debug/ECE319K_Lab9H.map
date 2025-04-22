@@ -1,7 +1,7 @@
 ******************************************************************************
             TI ARM Clang Linker PC v4.0.1                      
 ******************************************************************************
->> Linked Tue Apr 22 04:39:49 2025
+>> Linked Tue Apr 22 04:41:59 2025
 
 OUTPUT FILE NAME:   <ECE319K_Lab9H.out>
 ENTRY POINT SYMBOL: "_c_int00_noargs"  address: 0001c3e9
@@ -181,7 +181,7 @@ section   page    origin      length       input sections
                   0001c6d8    00000014     Sound.o (.text._Z18Sound_Fastinvader2v)
                   0001c6ec    00000014     ST7735.o (.text._Z19ST7735_SetTextColort)
                   0001c700    00000014     Peg.o (.text._ZN3Peg9updatePegEv)
-                  0001c714    00000014     Ball.o (.text._ZN4Ball3AimEj)
+                  0001c714    00000014     Ball.o (.text._ZN4Ball3aimEj)
                   0001c728    00000014     GameState.o (.text._ZN9GameState9addPointsEj)
                   0001c73c    00000014     GameState.o (.text._ZN9GameState9resetGameEv)
                   0001c750    00000014     GameState.o (.text._ZN9GameStateC2Ev)
@@ -611,7 +611,7 @@ address   name
 0001c2c1  _ZN3PegC2Ev                        
 0001b76d  _ZN4Ball14checkCollisionEtt        
 0001b4ad  _ZN4Ball18checkHoleCollisionEtt    
-0001c715  _ZN4Ball3AimEj                     
+0001c715  _ZN4Ball3aimEj                     
 0001c8bd  _ZN4Ball4getXEv                    
 0001c8c9  _ZN4Ball4getYEv                    
 0001b0ed  _ZN4Ball5isqrtEi                   
@@ -926,7 +926,7 @@ address   name
 0001c6d9  _Z18Sound_Fastinvader2v            
 0001c6ed  _Z19ST7735_SetTextColort           
 0001c701  _ZN3Peg9updatePegEv                
-0001c715  _ZN4Ball3AimEj                     
+0001c715  _ZN4Ball3aimEj                     
 0001c729  _ZN9GameState9addPointsEj          
 0001c73d  _ZN9GameState9resetGameEv          
 0001c751  _ZN9GameStateC1Ev                  

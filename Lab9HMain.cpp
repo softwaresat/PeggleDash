@@ -743,7 +743,7 @@ int main(void){ // final main
         currBall->setActive(true);
         Sound_Shoot();
       } else if (!currBall->getActive()) {
-        currBall->Aim(data);
+        currBall->aim(data);
       }
      
       
