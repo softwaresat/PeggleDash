@@ -51,7 +51,9 @@ extern "C" void TIMG12_IRQHandler(void);
 #define MENU_MAIN     0
 #define MENU_INSTRUCT 1
 #define GAME_RUNNING  2
-#define GAME_OVER     3
+#define GAME_OVER      3
+#define LEVEL_TRANSITION 4
+#define GAME_WON      5
 
 // Button press detection state
 #define BUTTON_RELEASED 0
@@ -77,6 +79,13 @@ uint32_t M=1;
 void SeedRandom(uint32_t seed) {
   M = seed;
 }
+
+
+
+void SeedRandom(uint32_t seed) {
+  M = seed;
+}
+
 uint32_t Random32(void){
   M = 1664525*M+1013904223;
   return M;
@@ -89,9 +98,10 @@ SlidePot Sensor(1500,0); // copy calibration from Lab 7
 uint32_t data;
 uint32_t input;
 Ball* currBall =  new Ball(192);
+Ball* currBall =  new Ball(192);
 Hole* movingHole = new Hole();
 // Always start with level 1
-int8_t levelSelect = 1;
+const int8_t levelSelect = 1;
 Peg pegs[25];
 int8_t pegCount = 0;
 int8_t indexAngle;
@@ -138,9 +148,18 @@ void DrawMainMenu() {
   ST7735_FillRect(15, 44, 98, 16, ST7735_BLUE);
   ST7735_FillRect(15, 67, 98, 16, ST7735_BLUE);
   
-  // Add menu option box outlines
-  ST7735_FillRect(15, 44, 98, 16, ST7735_CYAN);
-  ST7735_FillRect(15, 67, 98, 16, ST7735_CYAN);
+  // Add menu option box outlines using horizontal and vertical lines
+  // First box outline (top, right, bottom, left)
+  ST7735_DrawFastHLine(15, 44, 98, ST7735_CYAN); // top
+  ST7735_DrawFastVLine(15+98, 44, 16, ST7735_CYAN); // right
+  ST7735_DrawFastHLine(15, 44+16, 98, ST7735_CYAN); // bottom
+  ST7735_DrawFastVLine(15, 44, 16, ST7735_CYAN); // left
+  
+  // Second box outline
+  ST7735_DrawFastHLine(15, 67, 98, ST7735_CYAN); // top
+  ST7735_DrawFastVLine(15+98, 67, 16, ST7735_CYAN); // right
+  ST7735_DrawFastHLine(15, 67+16, 98, ST7735_CYAN); // bottom
+  ST7735_DrawFastVLine(15, 67, 16, ST7735_CYAN); // left
 
   // Handle selection highlighting
   if (selectedOption == 0) {
@@ -151,8 +170,8 @@ void DrawMainMenu() {
     ST7735_SetTextColor(MENU_NORMAL_COLOR);
   }
   
-  // Draw "Play Game" option
-  ST7735_SetCursor(6, 6);
+  // Draw "Play Game" option - position text inside the button
+  ST7735_SetCursor(6, 5);  // Changed from (6, 6)
   ST7735_OutString((char *)"PLAY GAME");
   
   // Handle selection highlighting for second option
@@ -164,8 +183,8 @@ void DrawMainMenu() {
     ST7735_SetTextColor(MENU_NORMAL_COLOR);
   }
   
-  // Draw "Instructions" option
-  ST7735_SetCursor(5, 9);
+  // Draw "Instructions" option - position text inside the button
+  ST7735_SetCursor(5, 8);  // Changed from (5, 9)
   ST7735_OutString((char *)"INSTRUCTIONS");
   
   // Reset text color for other text
@@ -198,28 +217,44 @@ void DrawInstructions() {
   // Draw instruction points with highlight boxes
   // Instruction 1
   ST7735_FillRect(2, 28, 124, 16, ST7735_BLUE);
-  ST7735_FillRect(2, 28, 124, 16, ST7735_CYAN);
+  // Draw outline around the box (top, right, bottom, left)
+  ST7735_DrawFastHLine(2, 28, 124, ST7735_CYAN); // top
+  ST7735_DrawFastVLine(2+124, 28, 16, ST7735_CYAN); // right
+  ST7735_DrawFastHLine(2, 28+16, 124, ST7735_CYAN); // bottom
+  ST7735_DrawFastVLine(2, 28, 16, ST7735_CYAN); // left
 
   ST7735_SetCursor(1, 4);
   ST7735_OutString((char *)"Use slidepot to aim");
   
   // Instruction 2
   ST7735_FillRect(2, 51, 124, 16, ST7735_BLUE);
-  ST7735_FillRect(2, 51, 124, 16, ST7735_CYAN);
+  // Draw outline around the box
+  ST7735_DrawFastHLine(2, 51, 124, ST7735_CYAN); // top
+  ST7735_DrawFastVLine(2+124, 51, 16, ST7735_CYAN); // right
+  ST7735_DrawFastHLine(2, 51+16, 124, ST7735_CYAN); // bottom
+  ST7735_DrawFastVLine(2, 51, 16, ST7735_CYAN); // left
 
   ST7735_SetCursor(1, 7);
   ST7735_OutString((char *)"Press button to shoot");
   
   // Instruction 3
   ST7735_FillRect(2, 74, 124, 16, ST7735_BLUE);
-  ST7735_FillRect(2, 74, 124, 16, ST7735_CYAN);
+  // Draw outline around the box
+  ST7735_DrawFastHLine(2, 74, 124, ST7735_CYAN); // top
+  ST7735_DrawFastVLine(2+124, 74, 16, ST7735_CYAN); // right
+  ST7735_DrawFastHLine(2, 74+16, 124, ST7735_CYAN); // bottom
+  ST7735_DrawFastVLine(2, 74, 16, ST7735_CYAN); // left
 
   ST7735_SetCursor(1, 10);
   ST7735_OutString((char *)"Hit pegs to score pts");
   
   // Instruction 4
   ST7735_FillRect(2, 97, 124, 16, ST7735_BLUE);
-  ST7735_FillRect(2, 97, 124, 16, ST7735_CYAN);
+  // Draw outline around the box
+  ST7735_DrawFastHLine(2, 97, 124, ST7735_CYAN); // top
+  ST7735_DrawFastVLine(2+124, 97, 16, ST7735_CYAN); // right
+  ST7735_DrawFastHLine(2, 97+16, 124, ST7735_CYAN); // bottom
+  ST7735_DrawFastVLine(2, 97, 16, ST7735_CYAN); // left
 
   ST7735_SetCursor(1, 13);
   ST7735_OutString((char *)"Get ball into bucket");
@@ -236,53 +271,123 @@ void DrawInstructions() {
   ST7735_SetTextColor(MENU_NORMAL_COLOR);
 }
 
-// Helper function to restore background at a specific position
-// Helper function to restore background at a specific position
-void RestoreBackground(int16_t x, int16_t y, int16_t w, int16_t h) {
-  if (currentLevel == nullptr) return;
+
+// Draw level transition screen
+void DrawLevelTransition() {
+  ST7735_FillScreen(ST7735_BLACK);
   
-  // Make sure we don't try to restore outside the screen boundaries
-  if (x < 0 || y < 0 || x + w > 128 || y + h > 160) return;
-  
-  // Create a temporary buffer to hold the section of the background
-  static uint16_t backgroundSection[64]; // Max 8x8 pixels for ball
-  
-  // Extract the specific section of the background image
-  const uint16_t* levelImage = currentLevel->getImage();
-  
-  // Fill the buffer with the correct background pixels
-  // The level image is drawn at (0, 160) which means the y-coordinate in the image
-  // is offset from the screen y-coordinate
-  for (int j = 0; j < h; j++) {
-    for (int i = 0; i < w; i++) {
-      // Calculate position in the level image (which is drawn at y=160)
-      // This is the key fix - we need to calculate y position differently
-      int imgPos = (y+j)*128 + (x+i);      
-      // Make sure we don't go out of bounds
-      if (imgPos >= 0 && imgPos < 128 * 160) {
-        // Store in our local buffer
-        backgroundSection[j * w + i] = levelImage[imgPos];
-      } else {
-        // Use black if we're out of bounds
-        backgroundSection[j * w + i] = 0x0000;
-      }
-    }
+  // Draw decorative top border with animation
+  for(int i = 0; i < 128; i+=8) {
+    ST7735_DrawFastHLine(i, 0, 8, ST7735_BLUE);
+    Clock_Delay1ms(10);  // Small delay for animation effect
   }
   
-  // Draw just this small section of the background
-  ST7735_DrawBitmap(x, y, backgroundSection, w, h);
+  // Draw decorative box
+  ST7735_FillRect(14, 40, 100, 60, ST7735_BLUE);
+  ST7735_DrawFastHLine(14, 40, 100, ST7735_CYAN);    // top
+  ST7735_DrawFastVLine(114, 40, 60, ST7735_CYAN);    // right
+  ST7735_DrawFastHLine(14, 100, 100, ST7735_CYAN);   // bottom
+  ST7735_DrawFastVLine(14, 40, 60, ST7735_CYAN);     // left
   
-  // Check if any pegs are in this area and need to be redrawn
-  for (int i = 0; i < pegCount; i++) {
-    int16_t pegX = pegs[i].getX() >> FIX;
-    int16_t pegY = pegs[i].getY() >> FIX;
-    
-    // If this peg overlaps with our restored area, redraw it
-    if (pegX + 8 > x && pegX < x + w && pegY + 8 > y && pegY < y + h) {
-      ST7735_DrawBitmap(pegX, pegY, pegs[i].getImage(), 8, 8);
-    }
+  ST7735_FillRect(15, 41, 98, 58, ST7735_BLACK);     // Inner black fill
+  
+  // Display level text
+  ST7735_SetTextColor(MENU_TITLE_COLOR);
+  ST7735_SetCursor(5, 5);
+  ST7735_OutString((char *)"LEVEL 2");
+  
+  // Draw fancy separator
+  for(int i = 0; i < 80; i+=4) {
+    ST7735_DrawFastHLine(24+i, 60, 4, ST7735_CYAN);
+    Clock_Delay1ms(20);  // Animation delay
   }
+  
+  // Display encouraging message
+  ST7735_SetTextColor(MENU_NORMAL_COLOR);
+  ST7735_SetCursor(3, 8);
+  ST7735_OutString((char *)"GREAT JOB!");
+  
+  ST7735_SetCursor(2, 10);
+  ST7735_OutString((char *)"GET READY FOR");
+  ST7735_SetCursor(3, 11);
+  ST7735_OutString((char *)"MORE ACTION!");
+  
+  // Footer instruction
+  ST7735_SetTextColor(MENU_FOOTER_COLOR);
+  ST7735_SetCursor(1, 15);
+  ST7735_OutString((char *)"Press LEFT to continue");
+  
+  // Sound effect
+  Sound_Killed();
 }
+
+// Draw the "You Won" screen at the end of level 2
+void DrawYouWonScreen() {
+  ST7735_FillScreen(ST7735_BLACK);
+  
+  // Animated top border
+  for(int i = 0; i < 128; i+=4) {
+    ST7735_DrawFastHLine(i, 0, 4, ST7735_GREEN);
+    Clock_Delay1ms(5);  // Small delay for animation effect
+  }
+  
+  // Draw decorative elements
+  for(int i = 0; i < 3; i++) {
+    ST7735_DrawFastHLine(20, 20+i, 88, ST7735_YELLOW);
+    ST7735_DrawFastHLine(20, 120+i, 88, ST7735_YELLOW);
+  }
+  
+  // Display congratulatory title with flashing effect
+  for(int i = 0; i < 3; i++) {
+    ST7735_SetTextColor(ST7735_GREEN);
+    ST7735_SetCursor(5, 3);
+    ST7735_OutString((char *)"YOU WON!");
+    Clock_Delay1ms(200);
+    ST7735_SetTextColor(ST7735_YELLOW);
+    ST7735_SetCursor(5, 3);
+    ST7735_OutString((char *)"YOU WON!");
+    Clock_Delay1ms(200);
+  }
+  
+  // Draw stars around the screen (decorative elements)
+  ST7735_SetTextColor(ST7735_YELLOW);
+  ST7735_SetCursor(1, 2);
+  ST7735_OutChar('*');
+  ST7735_SetCursor(15, 2);
+  ST7735_OutChar('*');
+  ST7735_SetCursor(3, 13);
+  ST7735_OutChar('*');
+  ST7735_SetCursor(13, 13);
+  ST7735_OutChar('*');
+  
+  // Draw congratulatory message
+  ST7735_SetTextColor(ST7735_WHITE);
+  ST7735_SetCursor(3, 6);
+  ST7735_OutString((char *)"CONGRATULATIONS");
+  
+  // Draw score in box
+  ST7735_FillRect(34, 70, 60, 30, ST7735_BLUE);
+  ST7735_DrawRect(34, 70, 60, 30, ST7735_CYAN);
+  
+  ST7735_SetTextColor(ST7735_WHITE);
+  ST7735_SetCursor(5, 9);
+  ST7735_OutString((char *)"SCORE:");
+  ST7735_SetCursor(6, 10);
+  ST7735_OutUDec(gameState.getScore());
+  
+  // Footer instruction
+  ST7735_SetTextColor(MENU_FOOTER_COLOR);
+  ST7735_SetCursor(1, 15);
+  ST7735_OutString((char *)"Press LEFT for menu");
+  
+  // Play victory sounds
+  Sound_Killed();
+  Clock_Delay1ms(300);
+  Sound_Killed();
+  Clock_Delay1ms(300);
+  Sound_Explosion();
+}
+
 // Initialize the game
 void InitGame() {
 
@@ -304,8 +409,9 @@ void InitGame() {
   ST7735_SetCursor(15, 0);
   ST7735_OutString((char *)"Lvl:");
   ST7735_OutUDec(gameState.getCurrentLevel());
-
-  ST7735_DrawBitmap(0, 160, currentLevel->getImage(), 128, 160);
+  
+  Level* level = new Level(levelSelect);
+  ST7735_DrawBitmap(0, 160, level->getImage(), 128, 160);
   
   // Generate pegs
   pegCount = 0;
@@ -362,14 +468,14 @@ void TIMG12_IRQHandler(void){uint32_t pos,msg;
       if (currBall->checkCollision(pegs[i].getX(), pegs[i].getY())) {
         currBall->bounce(pegs[i].getX(), pegs[i].getY());
         // Award points when hitting pegs
-        gameState.addPoints(100);
+        gameState.addPoints(10);
         // Play sound when hitting pegs
         Sound_Fastinvader1();
         // Simply update the peg (decrements hits)
         pegs[i].updatePeg();
         
         // If the peg is now destroyed, mark it to be erased in main loop
-        if (pegs[i].getHitState()) {
+        if (pegs[i].isDestroyed()) {
           // We'll handle the actual erasing in main, since we can't do LCD operations in ISR
           pegs[i].needsErase = true;
         }
@@ -392,10 +498,15 @@ void TIMG12_IRQHandler(void){uint32_t pos,msg;
     
     // Process peg hit timers
     for (int i = 0; i < pegCount; i++) {
-      if (pegs[i].needsErase) {
+      if (pegs[i].isHit && !pegs[i].needsErase) {
         if (pegs[i].hitTimer > 0) {
           // Decrement timer
           pegs[i].hitTimer--;
+        } else {
+          // Timer expired, mark for removal if peg is destroyed
+          if (pegs[i].isDestroyed()) {
+            pegs[i].needsErase = true;
+          }
         }
       }
     }
@@ -660,9 +771,9 @@ int main(void){ // final main
             ST7735_FillScreen(ST7735_BLACK);
             DrawTitle();
             DrawMainMenu();
-            if (currentLevel != nullptr) {
-              delete currentLevel;
-              currentLevel = nullptr;
+            if (level != nullptr) {
+              delete level;
+              level = nullptr;
             }
           } else if ((currentInput & BUTTON_DOWN) && !currBall->getActive()) {
             // Shoot the ball when player presses the right button and it was previously inactive
@@ -679,6 +790,78 @@ int main(void){ // final main
             ST7735_FillScreen(ST7735_BLACK);
             DrawTitle();
             DrawMainMenu();
+          }
+        } else if (menuState == LEVEL_TRANSITION) {
+          // Level Transition Screen Controls
+          if (currentInput & BUTTON_LEFT) {
+            // Continue to level 2
+            menuState = GAME_RUNNING;
+            ST7735_FillScreen(ST7735_BLACK);
+            
+            // Load new level
+            if (level != nullptr) {
+              delete level;
+            }
+            level = new Level(gameState.getCurrentLevel());
+            
+            // Draw the level background
+            ST7735_DrawBitmap(0, 160, level->getImage(), 128, 160);
+            
+            // Reset pegs and generate new ones for level 2
+            pegCount = 0;
+            int x = 0;
+            int y = 0;
+            bool found = false;
+            
+            while (pegCount < 25) {
+              found = false;
+              x = Random(113) + 4;
+              y = Random(104) + 24;
+              if (x < 0) {
+                x = -x;
+              } 
+              if (y < 0) {
+                y = -y;
+              } 
+              for (int i = 0; i < pegCount; i++) {
+                if (((x - (pegs[i].getX() >> FIX)) < 12 && (x - (pegs[i].getX() >> FIX)) > -12) && 
+                    ((y - (pegs[i].getY() >> FIX)) < 12 && (y - (pegs[i].getY() >> FIX)) > -12)) {
+                  found = true;
+                  break;
+                }
+              }
+              if (!found) {
+                // Add more variety of pegs in level 2
+                pegs[pegCount].init(x*256, y*256, 0, Random(3));
+                pegCount++;
+              }
+            }
+            
+            // Draw pegs for new level
+            for (int i = 0; i < pegCount; i++) {
+              ST7735_DrawBitmap(pegs[i].getX() >> FIX, pegs[i].getY() >> FIX, pegs[i].getImage(), 8, 8);
+            }
+            
+            // Reset ball
+            currBall->reset(192);
+            
+            // Play level start sound
+            Sound_Shoot();
+          }
+        } else if (menuState == GAME_WON) {
+          // Game Won Screen Controls
+          if (currentInput & BUTTON_LEFT) {
+            // Return to main menu
+            menuState = MENU_MAIN;
+            ST7735_FillScreen(ST7735_BLACK);
+            DrawTitle();
+            DrawMainMenu();
+            
+            // Clean up level if needed
+            if (level != nullptr) {
+              delete level;
+              level = nullptr;
+            }
           }
         }
       }
@@ -718,19 +901,17 @@ int main(void){ // final main
       
       // Check for pegs that need to be erased from the screen
       for (int i = 0; i < pegCount; i++) {
-        int32_t pegX = pegs[i].getX() >> FIX;
-        int32_t pegY = pegs[i].getY() >> FIX;
         if (pegs[i].needsErase) {
           // Get peg position and erase it
-          ST7735_DrawBitmap(pegX, pegY, pegs[i].getImage(), 8, 8);
+          int16_t pegX = pegs[i].getX() >> FIX;
+          int16_t pegY = pegs[i].getY() >> FIX;
+          
           // Erase the peg by drawing a black sprite over it
-          // Reset the flag so we don't erase it again
-        }
-        if (pegs[i].needsErase && pegs[i].hitTimer == 0) {
           ST7735_DrawBitmap(pegX, pegY, BlackCoverSprite, 8, 8);
+          
+          // Reset the flag so we don't erase it again
           pegs[i].needsErase = false;
-        } 
-        
+        }
       }
       
       // Update previous position
@@ -749,16 +930,8 @@ int main(void){ // final main
       
       ST7735_DrawBitmap(movingHole->getX() >> FIX, movingHole->getY() >> FIX, movingHole->getImage(), 48, 24);
       
-      // Handle level advancement
-      if (gameState.getScore() >= (gameState.getCurrentLevel() * 500) && levelSelect == 1) {
-        gameState.nextLevel();
-        levelSelect++;
-        // Load the next level, reset ball, etc.
-        ST7735_FillScreen(ST7735_BLACK);
-        InitGame();
-        // Play level-up sound
-        Sound_Explosion();
-     } else if (gameState.getScore() >= (gameState.getCurrentLevel() * 500) && levelSelect == 2) {
+      // Check for game over
+      if (gameState.isGameOver() && !transitionedToGameOver) {
         menuState = GAME_OVER;
         transitionedToGameOver = true;  // Set flag to prevent repeated transitions
         ST7735_FillScreen(ST7735_BLACK);
@@ -777,11 +950,18 @@ int main(void){ // final main
         ST7735_DrawFastHLine(20, 20, 88, ST7735_RED);
         ST7735_DrawFastHLine(20, 21, 88, ST7735_RED);
         
-        // Draw score frame
+        // Draw score frame - filled rectangle with outline
         ST7735_FillRect(24, 50, 80, 40, ST7735_BLUE);
-        ST7735_FillRect(25, 51, 78, 38, ST7735_CYAN);
-
         
+        // Draw rectangle outline using horizontal and vertical lines
+        ST7735_DrawFastHLine(24, 50, 80, ST7735_CYAN); // top
+        ST7735_DrawFastVLine(24+80, 50, 40, ST7735_CYAN); // right
+        ST7735_DrawFastHLine(24, 50+40, 80, ST7735_CYAN); // bottom
+        ST7735_DrawFastVLine(24, 50, 40, ST7735_CYAN); // left
+        
+        // Fill inner rectangle with different color
+        ST7735_FillRect(25, 51, 78, 38, ST7735_BLACK);
+
         // Display final score heading
         ST7735_SetTextColor(MENU_HEADER_COLOR);
         ST7735_SetCursor(4, 5);
@@ -805,7 +985,88 @@ int main(void){ // final main
         
         // Play game over sound
         Sound_Explosion();
-     }
+      }
+      
+      // Handle level advancement
+      if (gameState.getScore() >= (gameState.getCurrentLevel() * 500)) {
+        // Check if we're on level 1 and advancing to level 2
+        if (gameState.getCurrentLevel() == 1) {
+          menuState = LEVEL_TRANSITION;
+          gameState.nextLevel(); // Advance to level 2
+          
+          // Show level transition screen
+          DrawLevelTransition();
+          
+          // We'll wait for button press to continue (handled in input processing)
+          continue; // Skip the rest of the loop iteration
+        } 
+        // Check if we're completing level 2
+        else if (gameState.getCurrentLevel() == 2) {
+          menuState = GAME_WON;
+          
+          // Show victory screen
+          DrawYouWonScreen();
+          
+          // We'll wait for button press to return to menu (handled in input processing)
+          continue; // Skip the rest of the loop iteration
+        }
+        else {
+          gameState.nextLevel();
+          // Load the next level, reset ball, etc.
+          ST7735_FillScreen(ST7735_BLACK);
+          
+          // Load new level
+          if (level != nullptr) {
+            delete level;
+          }
+          level = new Level(gameState.getCurrentLevel());
+          
+          // Draw new level
+          ST7735_DrawBitmap(0, 160, level->getImage(), 128, 160);
+          
+          // Reset pegs
+          pegCount = 0;
+          
+          // Generate new pegs for next level
+          int x = 0;
+          int y = 0;
+          bool found = false;
+          
+          while (pegCount < 25) {
+            found = false;
+            x = Random(113) + 4;
+            y = Random(104) + 24;
+            if (x < 0) {
+              x = -x;
+            } 
+            if (y < 0) {
+              y = -y;
+            } 
+            for (int i = 0; i < pegCount; i++) {
+              if (((x - (pegs[i].getX() >> FIX)) < 12 && (x - (pegs[i].getX() >> FIX)) > -12) && 
+                  ((y - (pegs[i].getY() >> FIX)) < 12 && (y - (pegs[i].getY() >> FIX)) > -12)) {
+                found = true;
+                break;
+              }
+            }
+            if (!found) {
+              pegs[pegCount].init(x*256, y*256, 0, Random(3));
+              pegCount++;
+            }
+          }
+          
+          // Draw new pegs
+          for (int i = 0; i < pegCount; i++) {
+            ST7735_DrawBitmap(pegs[i].getX() >> FIX, pegs[i].getY() >> FIX, pegs[i].getImage(), 8, 8);
+          }
+          
+          // Reset ball
+          currBall->reset(192);
+          
+          // Play level-up sound
+          Sound_Explosion();
+        }
+      }
     }
   }
 }
