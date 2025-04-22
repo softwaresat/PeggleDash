@@ -34,6 +34,7 @@ private:
     int32_t vx = 0, vy = 0; // Velocity
     int8_t angle;
     bool active;
+
 };
 
 #endif

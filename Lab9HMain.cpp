@@ -325,8 +325,8 @@ void InitGame() {
       y = -y;
     }
     for (int i = 0; i < pegCount; i++) {
-      if (((x - (pegs[i].getX() >> FIX)) < 12 && (x - (pegs[i].getX() >> FIX)) > -12) && 
-          ((y - (pegs[i].getY() >> FIX)) < 12 && (y - (pegs[i].getY() >> FIX)) > -12)) {
+      if (((x - (pegs[i].getX() >> FIX)) < 16 && (x - (pegs[i].getX() >> FIX)) > -16) && 
+          ((y - (pegs[i].getY() >> FIX)) < 16 && (y - (pegs[i].getY() >> FIX)) > -16)) {
         found = true;
         break;
       }
@@ -362,7 +362,7 @@ void TIMG12_IRQHandler(void){uint32_t pos,msg;
       if (currBall->checkCollision(pegs[i].getX(), pegs[i].getY())) {
         currBall->bounce(pegs[i].getX(), pegs[i].getY());
         // Award points when hitting pegs
-        gameState.addPoints(100);
+        gameState.addPoints(50);
         // Play sound when hitting pegs
         Sound_Fastinvader1();
         // Simply update the peg (decrements hits)

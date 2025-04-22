@@ -55,13 +55,6 @@ Ball::Ball(uint8_t angle)
     image = ball;
     h = 8;
     w = 8;
-    x = 64 * 256;
-    y = 8 * 256;
-    vx = angleTable[angle][0];
-    vy = angleTable[angle][1]; 
-    image = ball;
-    h = 8;
-    w = 8;
 }
 
 void Ball::moveBall(){
@@ -70,7 +63,7 @@ void Ball::moveBall(){
     
     // Apply air resistance
     vx = (vx * 252) >> 8;  // slight air resistance (multiply by ~0.984)
-    
+
     // Terminal velocity check
     if (vy > 1280) {  // reduced from 1536 to 1280
         vy = 1280;
@@ -125,20 +118,32 @@ void Ball::bounce(uint16_t objX, uint16_t objY) {
 
     // Normalize the collision vector
     int32_t lengthSq = dx * dx + dy * dy;
-    if (lengthSq == 0) return;  // avoid div/zero
+    if (lengthSq == 0) {
+        dx = 1;
+        dy = 1;
+        lengthSq = 2;
+    };  // avoid div/zero
 
     // Get unit normal (Q8.8 fixed-point)
     int32_t len = isqrt(lengthSq);     // length in pixels
     if (len == 0) len = 1;             // avoid div by zero
+
     int32_t nx = (dx << 8) / len;      // normalize to Q8.8
     int32_t ny = (dy << 8) / len;
 
-    // Reflect velocity around the normal with energy loss
-    int32_t dot = (vx * nx + vy * ny) >> 8;  // projection of velocity on normal
-    
+    int32_t tx = -ny;
+    int32_t ty = nx;
+
+    int32_t vDotN = (vx * nx + vy * ny) >> 8;
+    int32_t vDotT = (vx * tx + vy * ty) >> 8;
+
+    // Reflect only the normal component and keep tangential
+    int32_t vx_new = ((vDotT * tx) >> 8) - ((vDotN * nx) >> 8);
+    int32_t vy_new = ((vDotT * ty) >> 8) - ((vDotN * ny) >> 8);
+
     // Apply reflection with energy loss
-    vx = ((vx - 2 * ((dot * nx) >> 8)) * 230) >> 8;  // 230/256 = ~0.90 energy retention
-    vy = ((vy - 2 * ((dot * ny) >> 8)) * 230) >> 8;
+    vx = (vx_new * 230) >> 8;
+    vy = (vy_new * 230) >> 8;
 
     // Clamp velocity to prevent excessive speeds
     int32_t speedSq = (vx * vx + vy * vy);
@@ -157,9 +162,14 @@ void Ball::bounce(uint16_t objX, uint16_t objY) {
         vy = (vy * scale) >> 8;
     }
 
-    // Move ball out of collision
-    x += (vx >> 5);  // Increased from >>6 to >>5 to better escape collision
-    y += (vy >> 5);
+    const int32_t minSeparation = (7 << 7);  // 3.5px in Q8.8
+    int32_t actualSeparation = (len << 8);   // actual distance in Q8.8
+    int32_t pushOut = minSeparation - actualSeparation;
+
+    if (pushOut > 0) {
+        x += (nx * pushOut) >> 8;
+        y += (ny * pushOut) >> 8;
+    }
 }
 
 bool Ball::checkHoleCollision(uint16_t holeX, uint16_t holeY) {
