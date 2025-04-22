@@ -84,7 +84,7 @@ void Ball::moveBall(){
     }
 }
 
-void Ball::Aim(uint32_t data) {
+void Ball::aim(uint32_t data) {
     x = (data >> 4) << 8;
 }
 
