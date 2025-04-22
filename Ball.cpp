@@ -48,15 +48,8 @@ const unsigned short ball[] = {
 Ball::Ball(uint8_t angle) 
 {
     active = false;
-    x = 64 * 256;
-    y = 8 * 256;
-    vx = angleTable[angle][0];
-    vy = angleTable[angle][1]; 
-    image = ball;
-    h = 8;
-    w = 8;
-    x = 64 * 256;
-    y = 8 * 256;
+    x = 8 * 256;
+    y = 16 * 256;
     vx = angleTable[angle][0];
     vy = angleTable[angle][1]; 
     image = ball;
@@ -70,7 +63,7 @@ void Ball::moveBall(){
     
     // Apply air resistance
     vx = (vx * 252) >> 8;  // slight air resistance (multiply by ~0.984)
-    
+
     // Terminal velocity check
     if (vy > 1280) {  // reduced from 1536 to 1280
         vy = 1280;
@@ -91,10 +84,13 @@ void Ball::moveBall(){
     }
 }
 
+void Ball::aim(uint32_t data) {
+    x = (data >> 4) << 8;
+}
+
 void Ball::reset(uint8_t angle){
     active = false; // The ball should start inactive after reset
-    x = 64 * 256;  // Reset x position to middle of screen
-    y = 8 * 256;   // Reset y position to top of screen
+    y = 16 * 256;   // Reset y position to top of screen
     vx = angleTable[angle][0];
     vy = angleTable[angle][1];    
 }
@@ -125,20 +121,38 @@ void Ball::bounce(uint16_t objX, uint16_t objY) {
 
     // Normalize the collision vector
     int32_t lengthSq = dx * dx + dy * dy;
-    if (lengthSq == 0) return;  // avoid div/zero
+    if (lengthSq == 0) {
+        dx = 1;
+        dy = 1;
+        lengthSq = 2;
+    };  // avoid div/zero
 
     // Get unit normal (Q8.8 fixed-point)
     int32_t len = isqrt(lengthSq);     // length in pixels
     if (len == 0) len = 1;             // avoid div by zero
+
     int32_t nx = (dx << 8) / len;      // normalize to Q8.8
     int32_t ny = (dy << 8) / len;
 
-    // Reflect velocity around the normal with energy loss
-    int32_t dot = (vx * nx + vy * ny) >> 8;  // projection of velocity on normal
-    
+    // Calculate tangent vector
+    int32_t tx = -ny;
+    int32_t ty = nx;
+
+    // Calculate velocity components
+    int32_t vDotN = (vx * nx + vy * ny) >> 8;
+    int32_t vDotT = (vx * tx + vy * ty) >> 8;
+
+    // ANTI-ORBIT MODIFICATION: Reduce tangential component to prevent orbiting
+    // This helps prevent the ball from maintaining its tangential velocity and orbiting
+    vDotT = (vDotT * 192) >> 8;  // Reduce tangential component to 75% (192/256)
+
+    // Reflect only the normal component and keep (reduced) tangential
+    int32_t vx_new = ((vDotT * tx) >> 8) - ((vDotN * nx) >> 8);
+    int32_t vy_new = ((vDotT * ty) >> 8) - ((vDotN * ny) >> 8);
+
     // Apply reflection with energy loss
-    vx = ((vx - 2 * ((dot * nx) >> 8)) * 230) >> 8;  // 230/256 = ~0.90 energy retention
-    vy = ((vy - 2 * ((dot * ny) >> 8)) * 230) >> 8;
+    vx = (vx_new * 230) >> 8;
+    vy = (vy_new * 230) >> 8;
 
     // Clamp velocity to prevent excessive speeds
     int32_t speedSq = (vx * vx + vy * vy);
@@ -150,27 +164,34 @@ void Ball::bounce(uint16_t objX, uint16_t objY) {
     }
 
     // Ensure minimum speed after bounce to prevent getting stuck
-    const int32_t minSpeed = 128;  // minimum speed after bounce
+    const int32_t minSpeed = 108;  // minimum speed after bounce
     if (speedSq < (minSpeed * minSpeed)) {
         int32_t scale = (minSpeed << 8) / isqrt(speedSq);
         vx = (vx * scale) >> 8;
         vy = (vy * scale) >> 8;
     }
 
-    // Move ball out of collision
-    x += (vx >> 5);  // Increased from >>6 to >>5 to better escape collision
-    y += (vy >> 5);
+    // Increase separation distance to push ball further from peg
+    const int32_t minSeparation = (14 << 7);  // Increased from 7<<7 to 10<<7 (5px in Q8.8)
+    int32_t actualSeparation = (len << 8);    // actual distance in Q8.8
+    int32_t pushOut = minSeparation - actualSeparation;
+
+    if (pushOut > 0) {
+        // Apply stronger push-out to ensure separation
+        x += (nx * pushOut) >> 8;  // Doubling the push force with >> 7 instead of >> 8
+        y += (ny * pushOut) >> 8;
+    }
 }
 
 bool Ball::checkHoleCollision(uint16_t holeX, uint16_t holeY) {
     int32_t ballX = x >> 8;
     int32_t ballY = y >> 8;
-    int32_t bucketX = (holeX >> 8) + 15;
-    int32_t bucketY = (holeY >> 8) - 17;
+    int32_t bucketX = (holeX >> 8) + 17;
+    int32_t bucketY = (holeY >> 8) - 16;
     
     // The bucket/hole is larger than pegs
     // Check if ball is entering the top part of the bucket (make detection more generous)
-    if (ballX >= bucketX && ballX <= bucketX + 18 && 
+    if (ballX >= bucketX && ballX <= bucketX + 17 && 
         ballY >= bucketY) {
         // When the ball hits the bucket, deactivate it so it "falls in"
         active = false;

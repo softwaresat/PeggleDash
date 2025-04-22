@@ -10,7 +10,7 @@ public:
     Ball(uint8_t angle);               // Constructor
     void reset(uint8_t angle);
     ~Ball();
-    
+    void aim(uint32_t data);
     bool getActive();
     void setActive();
     void setActive(bool isActive); // Set active to specified state
@@ -34,6 +34,7 @@ private:
     int32_t vx = 0, vy = 0; // Velocity
     int8_t angle;
     bool active;
+
 };
 
 #endif

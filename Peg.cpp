@@ -42,19 +42,19 @@ Peg::Peg() {
     this->hits = 1; // Default to 1 hit to destroy
     this->needsErase = false; // Initialize needsErase to false
     this->isHit = false; // Initialize isHit to false
-    this->hitTimer = 0; // Initialize hitTimer to 0
+    this->hitTimer = 60; // Initialize hitTimer to 0
     this->color = 0; // Default to blue
     w = 8;
     h = 8;
 }
 
-void Peg::init(int32_t x, int32_t y, int8_t hits, int8_t color) {
+void Peg::init(int32_t x, int32_t y, int8_t hits, uint8_t color) {
     this->x = x;
     this->y = y;
     this->hits = 1; // Initialize with 1 hit to destroy
     this->needsErase = false; // Reset needsErase flag
     this->isHit = false; // Initialize isHit to false
-    this->hitTimer = 0; // Initialize hitTimer to 0
+    this->hitTimer = 60; // Initialize hitTimer to 0
     this->color = color; // Store the color for later use
     this->w = 8;
     this->h = 8;
@@ -87,6 +87,10 @@ uint16_t Peg::getH(){
     return h;
 }
 
+uint8_t Peg::getColor(){
+    return color;
+}
+
 const uint16_t* Peg::getImage(){
     // Return the appropriate image based on hit state and color
     if (isHit) {
@@ -112,7 +116,7 @@ void Peg::updatePeg(){
     isHit = true;
     // Set the hit timer to determine how long to show the hit image
     // This will count down in the game loop
-    hitTimer = 60; // Show hit image for 5 frames (about 1/6 second at 30Hz)
+     // Show hit image for 5 frames (about 1/6 second at 30Hz)
 }
 
 bool Peg::isDestroyed() {
