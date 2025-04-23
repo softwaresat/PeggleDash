@@ -305,9 +305,9 @@ void DrawYouWonScreen() {
   
   // Draw decorative elements
   for(int i = 0; i < 3; i++) {
-    ST7735_DrawFastHLine(15, 23+i, 80, ST7735_YELLOW);
-    ST7735_DrawFastHLine(15, 123+i, 80, ST7735_YELLOW);
-    Clock_Delay1ms(100);
+    ST7735_DrawFastHLine(0, 23+i, 128, ST7735_YELLOW);
+    ST7735_DrawFastHLine(0, 123+i, 128, ST7735_YELLOW);
+    Clock_Delay1ms(50);
   }
   
   // Display congratulatory title with flashing effect
@@ -321,17 +321,6 @@ void DrawYouWonScreen() {
     ST7735_OutString((char *)"YOU WON!");
     Clock_Delay1ms(200);
   }
-  
-  // Draw stars around the screen (decorative elements)
-  ST7735_SetTextColor(ST7735_YELLOW);
-  ST7735_SetCursor(1, 2);
-  ST7735_OutChar('*');
-  ST7735_SetCursor(14, 2);
-  ST7735_OutChar('*');
-  ST7735_SetCursor(1, 11);
-  ST7735_OutChar('*');
-  ST7735_SetCursor(14, 11);
-  ST7735_OutChar('*');
   
   // Draw congratulatory message
   ST7735_SetTextColor(ST7735_WHITE);
@@ -393,7 +382,7 @@ void mergeSpriteWithBackground(
             uint32_t destIndex = sy * spriteWidth + sx;
             
             // Calculate screen coordinates
-            int32_t screenY = topY + sy;
+            int32_t screenY = 160 - (y - sy);
             int32_t screenX = x + sx;
             
             // Safety check: is the pixel within screen bounds?
@@ -436,19 +425,7 @@ void InitGame() {
   gameState.resetGame();
   gameState.setCurrentLevel(levelSelect);
   
-  // Display initial game stats
-  ST7735_SetCursor(0, 0);
-  ST7735_OutString((char *)"Balls:");
-  ST7735_OutUDec(gameState.getBallsRemaining());
-  ST7735_SetCursor(7, 0);
-  ST7735_OutString((char *)"Score:");
-  ST7735_OutUDec(gameState.getScore());
-  ST7735_SetCursor(15, 0);
-  ST7735_OutString((char *)"Lvl:");
-  ST7735_OutUDec(gameState.getCurrentLevel());
-  
-  Level* level = new Level(levelSelect);
-  ST7735_DrawBitmap(0, 160, level->getImage(), 128, 160);
+  ST7735_DrawBitmap(0, 160, currentLevel->getImage(), 128, 160);
   
   // Generate pegs
   pegCount = 0;
@@ -876,11 +853,21 @@ int main(void){ // final main
      
       
       // Update game stats display
-      ST7735_SetCursor(0, 0);
-      ST7735_OutString((char *)"Balls:");
+      ST7735_SetTextColor(ST7735_BLACK);
+      ST7735_SetCursor(2, 0);
+      ST7735_OutStringTransparent((char *)"Balls:");
+      ST7735_SetTextColor(ST7735_WHITE);
+      if (gameState.getBallsRemaining() < 10) {
+        ST7735_OutUDec(0);
+      }
       ST7735_OutUDec(gameState.getBallsRemaining());
-      ST7735_SetCursor(10, 0);
-      ST7735_OutString((char *)"Orange:");
+      ST7735_SetCursor(11, 0);
+      ST7735_SetTextColor(ST7735_BLACK);
+      ST7735_OutStringTransparent((char *)"Orange:");
+      ST7735_SetTextColor(ST7735_WHITE);
+      if (orangeCount < 10) {
+        ST7735_OutUDec(0);
+      }
       ST7735_OutUDec(orangeCount);
     
       
@@ -907,7 +894,10 @@ int main(void){ // final main
         int32_t pegY = pegs[i].getY() >> FIX;
         if (pegs[i].needsErase) {
           // Get peg position and erase it
-          ST7735_DrawBitmap(pegX, pegY, pegs[i].getImage(), 8, 8);
+          uint16_t* destBuffer = new uint16_t[64] ;
+          mergeSpriteWithBackground(destBuffer, BlackCoverSprite, 8, 8, currentLevel->getImage(), 128, pegX, pegY, 0x0000);
+          ST7735_DrawBitmap(pegX, pegY, destBuffer, 8, 8);
+          delete[] destBuffer;
           // Erase the peg by drawing a black sprite over it
           // Reset the flag so we don't erase it again
         }
@@ -942,8 +932,8 @@ int main(void){ // final main
       }
       
       uint16_t destBuffer2[1152];
-      mergeSpriteWithBackground(destBuffer2, movingHole->getImage(), 48, 24, currentLevel->getImage(), 128, movingHole->getX() >> FIX, movingHole->getY() >> FIX, 0x0000);
-      ST7735_DrawBitmap(movingHole->getX() >> FIX, movingHole->getY() >> FIX, destBuffer2, 48, 24);
+      mergeSpriteWithBackground(destBuffer2, movingHole->getImage(), 30, 24, currentLevel->getImage(), 128, movingHole->getX() >> FIX, movingHole->getY() >> FIX, 0x0000);
+      ST7735_DrawBitmap(movingHole->getX() >> FIX, movingHole->getY() >> FIX, destBuffer2, 30, 24);
 
       // Handle level advancement
       if (gameState.getBallsRemaining() == 0) {
@@ -952,6 +942,9 @@ int main(void){ // final main
         DrawGameOver();
       }
       if (orangeCount == 0 && levelSelect == 1) {
+        while (currBall->getActive()) {
+          //do nothing
+        }
         menuState = LEVEL_TRANSITION;
         gameState.resetGame();
         currBall->reset(64);

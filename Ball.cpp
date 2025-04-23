@@ -186,7 +186,7 @@ void Ball::bounce(uint16_t objX, uint16_t objY) {
 bool Ball::checkHoleCollision(uint16_t holeX, uint16_t holeY) {
     int32_t ballX = x >> 8;
     int32_t ballY = y >> 8;
-    int32_t bucketX = (holeX >> 8) + 17;
+    int32_t bucketX = (holeX >> 8) + 5;
     int32_t bucketY = (holeY >> 8) - 16;
     
     // The bucket/hole is larger than pegs
