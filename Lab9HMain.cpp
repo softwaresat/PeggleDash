@@ -936,15 +936,7 @@ int main(void){ // final main
       ST7735_DrawBitmap(movingHole->getX() >> FIX, movingHole->getY() >> FIX, destBuffer2, 30, 24);
 
       // Handle level advancement
-      if (gameState.getBallsRemaining() == 0) {
-        menuState = GAME_OVER;
-        Sound_Explosion();
-        DrawGameOver();
-      }
-      if (orangeCount == 0 && levelSelect == 1) {
-        while (currBall->getActive()) {
-          //do nothing
-        }
+      if (orangeCount == 0 && levelSelect == 1 && !currBall->getActive()) {
         menuState = LEVEL_TRANSITION;
         gameState.resetGame();
         currBall->reset(64);
@@ -953,11 +945,16 @@ int main(void){ // final main
         // Play level-up sound
         Sound_Explosion();
         continue;
-     } else if (orangeCount == 0 && levelSelect == 2) {
+     } else if (orangeCount == 0 && levelSelect == 2 && !currBall->getActive()) {
         menuState = GAME_WON;
         Sound_Explosion();
         DrawYouWonScreen();
         // Play game over sound
+      }
+      if (gameState.getBallsRemaining() == 0 && orangeCount != 0) {
+        menuState = GAME_OVER;
+        Sound_Explosion();
+        DrawGameOver();
       }
     }
   }
