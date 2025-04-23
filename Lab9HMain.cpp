@@ -31,6 +31,7 @@
 #include "GameState.h"
 
 
+
 extern "C" void __disable_irq(void);
 extern "C" void __enable_irq(void);
 extern "C" void TIMG12_IRQHandler(void);
@@ -54,11 +55,14 @@ extern "C" void TIMG12_IRQHandler(void);
 #define GAME_OVER      3
 #define LEVEL_TRANSITION 4
 #define GAME_WON      5
+#define MENU_LANG 6
 
 // Button press detection state
 #define BUTTON_RELEASED 0
 
 // Current menu state
+bool checkLang = true;
+bool down = true;
 Level* currentLevel = nullptr; // Store level background for redrawing
 bool transitionedToGameOver = false; // Flag to prevent repeated game over transitions
 uint8_t menuState = MENU_MAIN;
@@ -136,6 +140,111 @@ void DrawTitle() {
 // Draw main menu options with improved visuals
 void DrawMainMenu() {
   // Draw menu options background boxes
+  ST7735_FillRect(15, 48, 98, 12, ST7735_BLUE);
+  ST7735_FillRect(15, 68, 98, 12, ST7735_BLUE);
+  ST7735_FillRect(15, 88, 98, 12, ST7735_BLUE);
+  
+  // Add menu option box outlines
+  ST7735_FillRect(14, 46, 100, 14, ST7735_CYAN);
+  ST7735_FillRect(14, 66, 100, 14, MENU_NORMAL_COLOR);
+  ST7735_FillRect(14, 86, 100, 14, MENU_NORMAL_COLOR);
+  
+
+
+  // Handle selection highlighting
+  if (selectedOption == 0) {
+    ST7735_FillRect(14, 46, 100, 14, ST7735_CYAN);
+    ST7735_FillRect(16, 48, 96, 10, ST7735_BLUE);
+    ST7735_SetTextColor(MENU_SELECTED_COLOR);
+  } else {
+    ST7735_FillRect(14, 46, 100, 14, MENU_NORMAL_COLOR);
+    ST7735_FillRect(16, 48, 96, 10, ST7735_BLACK);
+    ST7735_SetTextColor(MENU_NORMAL_COLOR);
+  }
+  
+  // Draw "Play Game" option
+  if (checkLang) {
+    ST7735_SetCursor(6, 5);
+    ST7735_OutStringTransparent((char *)"PLAY GAME");
+  } else {
+    ST7735_SetCursor(5, 5);
+    ST7735_OutStringTransparent((char *)"JUGAR JUEGO");
+  }
+  
+  
+  // Handle selection highlighting for second option
+  if (selectedOption == 1) {
+    ST7735_FillRect(14, 66, 100, 14, ST7735_CYAN);
+    ST7735_FillRect(16, 68, 96, 10, ST7735_BLUE);
+    ST7735_SetTextColor(MENU_SELECTED_COLOR);
+  } else {
+    ST7735_FillRect(14, 66, 100, 14, MENU_NORMAL_COLOR);
+    ST7735_FillRect(16, 68, 96, 10, ST7735_BLACK);
+    ST7735_SetTextColor(MENU_NORMAL_COLOR);
+  }
+  
+  // Draw "Instructions" option
+  if (checkLang) {
+    ST7735_SetCursor(5, 7);
+    ST7735_OutStringTransparent((char *)"INSTRUCTIONS");
+  } else {
+    ST7735_SetCursor(4, 7);
+    ST7735_OutStringTransparent((char *)"INSTRUCCIONES");
+  }
+
+  if (selectedOption == 2) {
+    ST7735_FillRect(14, 86, 100, 14, ST7735_CYAN);
+    ST7735_FillRect(16, 88, 96, 10, ST7735_BLUE);
+    ST7735_SetTextColor(MENU_SELECTED_COLOR);
+  } else {
+    ST7735_FillRect(14, 86, 100, 14, MENU_NORMAL_COLOR);
+    ST7735_FillRect(16, 88, 96, 10, ST7735_BLACK);
+    ST7735_SetTextColor(MENU_NORMAL_COLOR);
+  }
+
+  if (checkLang){
+    ST7735_SetCursor(7, 9);
+    ST7735_OutStringTransparent((char *)"LANGUAGE");
+  } else {
+    ST7735_SetCursor(7, 9);
+    ST7735_OutStringTransparent((char *)"IDIOMA");
+  }
+  
+  // Reset text color for other text
+  ST7735_SetTextColor(MENU_FOOTER_COLOR);
+  
+  // Draw controls help
+  if (checkLang) {
+    ST7735_SetCursor(4, 13);
+    ST7735_OutString((char *)"DOWN: Select");
+    ST7735_SetCursor(5, 14);
+    ST7735_OutString((char *)"UP: Confirm");
+  } else {
+    ST7735_SetCursor(4, 13);
+    ST7735_OutString((char *)"ABAJO: Elige");
+    ST7735_SetCursor(3, 14);
+    ST7735_OutString((char *)"ARRIBA: Aceptar");
+  }
+  // Reset text color
+  ST7735_SetTextColor(MENU_NORMAL_COLOR);
+}
+
+void DrawLang() {
+
+// Draw header with decorative elements
+  ST7735_DrawFastHLine(0, 12, 128, ST7735_BLUE);
+  ST7735_DrawFastHLine(0, 13, 128, ST7735_CYAN);
+  
+  // Set header color and draw title
+  ST7735_SetTextColor(MENU_HEADER_COLOR);
+  if (checkLang) {
+    ST7735_SetCursor(7, 1);
+    ST7735_OutString((char *)"LANGUAGE");
+  } else {
+    ST7735_SetCursor(7, 1);
+    ST7735_OutString((char *)"IDIOMA");
+  }
+
   ST7735_FillRect(15, 48, 98, 16, ST7735_BLUE);
   ST7735_FillRect(15, 88, 98, 16, ST7735_BLUE);
   
@@ -144,7 +253,7 @@ void DrawMainMenu() {
   ST7735_FillRect(14, 86, 100, 18, MENU_NORMAL_COLOR);
 
   // Handle selection highlighting
-  if (selectedOption == 0) {
+  if (checkLang) {
     ST7735_FillRect(14, 46, 100, 18, ST7735_CYAN);
     ST7735_FillRect(16, 48, 96, 14, ST7735_BLUE);
     ST7735_SetTextColor(MENU_SELECTED_COLOR);
@@ -155,12 +264,12 @@ void DrawMainMenu() {
   }
   
   // Draw "Play Game" option
-  ST7735_SetCursor(6, 7);
+  ST7735_SetCursor(7, 7);
 
-  ST7735_OutString((char *)"PLAY GAME");
+  ST7735_OutString((char *)"ENGLISH");
   
   // Handle selection highlighting for second option
-  if (selectedOption == 1) {
+  if (!checkLang) {
     ST7735_FillRect(14, 86, 100, 18, ST7735_CYAN);
     ST7735_FillRect(16, 88, 96, 14, ST7735_BLUE);
     ST7735_SetTextColor(MENU_SELECTED_COLOR);
@@ -171,18 +280,23 @@ void DrawMainMenu() {
   }
   
   // Draw "Instructions" option
-  ST7735_SetCursor(5, 11);
-  ST7735_OutString((char *)"INSTRUCTIONS");
+  ST7735_SetCursor(7, 11);
+  ST7735_OutString((char *)"ESPANOL");
+
+  ST7735_DrawFastHLine(0, 131, 128, ST7735_CYAN);
+  ST7735_DrawFastHLine(0, 132, 128, ST7735_BLUE);
   
   // Reset text color for other text
   ST7735_SetTextColor(MENU_FOOTER_COLOR);
   
   // Draw controls help
-  ST7735_SetCursor(3, 13);
-  ST7735_OutString((char *)"UP/DOWN: Select");
-  ST7735_SetCursor(4, 14);
-  ST7735_OutString((char *)"LEFT: Confirm");
-  
+  if (checkLang) {
+    ST7735_SetCursor(6, 14);
+    ST7735_OutString((char *)"UP: Return");
+  } else {
+    ST7735_SetCursor(3, 14);
+    ST7735_OutString((char *)"ARRIBA: Aceptar");
+  }
   // Reset text color
   ST7735_SetTextColor(MENU_NORMAL_COLOR);
 }
@@ -195,35 +309,66 @@ void DrawInstructions() {
   
   // Set header color and draw title
   ST7735_SetTextColor(MENU_HEADER_COLOR);
-  ST7735_SetCursor(5, 1);
-  ST7735_OutString((char *)"HOW TO PLAY");
+  if (checkLang) {
+    ST7735_SetCursor(5, 1);
+    ST7735_OutString((char *)"HOW TO PLAY");
+    
+    // Reset color for instructions text
+    ST7735_SetTextColor(MENU_NORMAL_COLOR);
+    
+    // Draw instruction points with highlight boxes
+    ST7735_SetCursor(1, 3);
+    ST7735_OutString((char *)"Use slidepot to aim");
+    
+    ST7735_SetCursor(1, 5);
+    ST7735_OutString((char *)"Press down to shoot");
+
+    ST7735_SetCursor(1, 7);
+    ST7735_OutString((char *)"Clear orange pegs");
+
+    ST7735_SetCursor(1, 9);
+    ST7735_OutString((char *)"0 Balls = Game Over");
+
+
+    ST7735_SetCursor(1, 11);
+    ST7735_OutString((char *)"Bucket = +1 Balls");
+  } else {
+    ST7735_SetCursor(5, 1);
+    ST7735_OutString((char *)"COMO JUGAR");
+    
+    // Reset color for instructions text
+    ST7735_SetTextColor(MENU_NORMAL_COLOR);
+    
+    // Draw instruction points with highlight boxes
+    ST7735_SetCursor(1, 3);
+    ST7735_OutString((char *)"Objetivo deslizante");
+    
+    ST7735_SetCursor(1, 5);
+    ST7735_OutString((char *)"Abajo para disparar");
+
+    ST7735_SetCursor(1, 7);
+    ST7735_OutString((char *)"0 clavijas naranjas");
+
+    ST7735_SetCursor(1, 9);
+    ST7735_OutString((char *)"0 Bolas = Terminado");
+
+
+    ST7735_SetCursor(1, 11);
+    ST7735_OutString((char *)"Cubo = +1 Bolas");
+  }
   
-  // Reset color for instructions text
-  ST7735_SetTextColor(MENU_NORMAL_COLOR);
-  
-  // Draw instruction points with highlight boxes
-  ST7735_SetCursor(1, 3);
-  ST7735_OutString((char *)"Use slidepot to aim");
-  
-  ST7735_SetCursor(1, 5);
-  ST7735_OutString((char *)"Press down to shoot");
-
-  ST7735_SetCursor(1, 7);
-  ST7735_OutString((char *)"Clear orange pegs");
-
-  ST7735_SetCursor(1, 9);
-  ST7735_OutString((char *)"0 balls = Game Over");
-
-
-  ST7735_SetCursor(1, 11);
-  ST7735_OutString((char *)"Bucket = +1 balls");
   
   ST7735_DrawFastHLine(0, 131, 128, ST7735_CYAN);
   ST7735_DrawFastHLine(0, 132, 128, ST7735_BLUE);
   
   ST7735_SetTextColor(MENU_FOOTER_COLOR);
-  ST7735_SetCursor(3, 14);
-  ST7735_OutString((char *)"Left to return");
+  if (checkLang) {
+    ST7735_SetCursor(6, 14);
+  ST7735_OutString((char *)"UP: Return");
+  } else {
+    ST7735_SetCursor(3, 14);
+    ST7735_OutString((char *)"ARRIBA: Aceptar");
+  }
   
   // Reset text color
   ST7735_SetTextColor(MENU_NORMAL_COLOR);
@@ -235,14 +380,25 @@ void DrawGameOver() {
         ST7735_FillScreen(ST7735_BLACK);
         
         // Draw game over title
-        ST7735_SetTextColor(MENU_TITLE_COLOR);
-        ST7735_SetCursor(7, 2);
-        ST7735_OutString((char *)"GAME OVER");
+        if (checkLang) {
+          ST7735_SetTextColor(MENU_TITLE_COLOR);
+          ST7735_SetCursor(7, 2);
+          ST7735_OutString((char *)"GAME OVER");
         
-        // Display final score heading
-        ST7735_SetTextColor(MENU_HEADER_COLOR);
-        ST7735_SetCursor(6, 5);
-        ST7735_OutString((char *)"FINAL SCORE");
+          // Display final score heading
+          ST7735_SetTextColor(MENU_HEADER_COLOR);
+          ST7735_SetCursor(6, 5);
+          ST7735_OutString((char *)"FINAL SCORE");
+        } else {
+          ST7735_SetTextColor(MENU_TITLE_COLOR);
+          ST7735_SetCursor(3, 2);
+          ST7735_OutString((char *)"JUEGO TERMINADO");
+        
+          // Display final score heading
+          ST7735_SetTextColor(MENU_HEADER_COLOR);
+          ST7735_SetCursor(3, 5);
+          ST7735_OutString((char *)"PUNTUACION FINAL");
+        }
         
         // Display score value with highlight
         ST7735_SetTextColor(ST7735_WHITE);
@@ -253,9 +409,15 @@ void DrawGameOver() {
         ST7735_DrawFastHLine(0, 130, 128, ST7735_BLUE);
         ST7735_DrawFastHLine(0, 131, 128, ST7735_CYAN);
         
-        ST7735_SetTextColor(MENU_FOOTER_COLOR);
-        ST7735_SetCursor(3, 15);
-        ST7735_OutString((char *)"Left to continue");
+        ST7735_SetTextColor(MENU_FOOTER_COLOR); 
+
+        if (checkLang) {
+          ST7735_SetCursor(6, 14);
+          ST7735_OutString((char *)"UP: Return");
+        } else {
+          ST7735_SetCursor(3, 14);
+          ST7735_OutString((char *)"ARRIBA: Aceptar");
+        }
         
         // Reset text color
         ST7735_SetTextColor(MENU_NORMAL_COLOR);
@@ -764,7 +926,16 @@ int main(void){ // final main
         if (menuState == MENU_MAIN) {
             // Only toggle on a DOWN press, and only once per press
             if (justPressed & BUTTON_DOWN) {
-                selectedOption = (selectedOption == 0) ? 1 : 0;
+                if (selectedOption == 2) {
+                  down = false;
+                } else if (selectedOption == 0) {
+                  down = true;
+                }
+                if (down) {
+                  selectedOption++;
+                } else {
+                  selectedOption--;
+                }
                 DrawMainMenu();
             } else if (justPressed & BUTTON_LEFT) {
              // Option selected
@@ -780,6 +951,10 @@ int main(void){ // final main
                menuState = MENU_INSTRUCT;
                ST7735_FillScreen(ST7735_BLACK);
                DrawInstructions();
+             } else {
+                menuState = MENU_LANG;
+                ST7735_FillScreen(ST7735_BLACK);
+                DrawLang();
              }
           }
         } else if (menuState == MENU_INSTRUCT) {
@@ -836,6 +1011,17 @@ int main(void){ // final main
             // Clean up level if needed
             delete level;
           }
+        } else if (menuState == MENU_LANG) {
+          if (justPressed & BUTTON_DOWN) {
+            checkLang = (checkLang == 1) ? 0 : 1;
+            ST7735_FillScreen(ST7735_BLACK);
+            DrawLang();
+          } else if (justPressed & BUTTON_LEFT) {
+            menuState = MENU_MAIN;
+            ST7735_FillScreen(ST7735_BLACK);
+            DrawTitle();
+            DrawMainMenu();
+          }
         }
       }
     // Update last input state
@@ -854,21 +1040,40 @@ int main(void){ // final main
       
       // Update game stats display
       ST7735_SetTextColor(ST7735_BLACK);
-      ST7735_SetCursor(2, 0);
-      ST7735_OutStringTransparent((char *)"Balls:");
-      ST7735_SetTextColor(ST7735_WHITE);
-      if (gameState.getBallsRemaining() < 10) {
-        ST7735_OutUDec(0);
+      if (checkLang) {
+        ST7735_SetCursor(2, 0);
+        ST7735_OutStringTransparent((char *)"Balls:");
+        ST7735_SetTextColor(ST7735_WHITE);
+        if (gameState.getBallsRemaining() < 10) {
+          ST7735_OutUDec(0);
+        }
+        ST7735_OutUDec(gameState.getBallsRemaining());
+        ST7735_SetCursor(11, 0);
+        ST7735_SetTextColor(ST7735_BLACK);
+        ST7735_OutStringTransparent((char *)"Orange:");
+        ST7735_SetTextColor(ST7735_WHITE);
+        if (orangeCount < 10) {
+          ST7735_OutUDec(0);
+        }
+        ST7735_OutUDec(orangeCount);
+      } else {
+        ST7735_SetCursor(1, 0);
+        ST7735_OutStringTransparent((char *)"Bolas:");
+        ST7735_SetTextColor(ST7735_WHITE);
+        if (gameState.getBallsRemaining() < 10) {
+          ST7735_OutUDec(0);
+        }
+        ST7735_OutUDec(gameState.getBallsRemaining());
+        ST7735_SetCursor(10, 0);
+        ST7735_SetTextColor(ST7735_BLACK);
+        ST7735_OutStringTransparent((char *)"Naranja:");
+        ST7735_SetTextColor(ST7735_WHITE);
+        if (orangeCount < 10) {
+          ST7735_OutUDec(0);
+        }
+        ST7735_OutUDec(orangeCount);
       }
-      ST7735_OutUDec(gameState.getBallsRemaining());
-      ST7735_SetCursor(11, 0);
-      ST7735_SetTextColor(ST7735_BLACK);
-      ST7735_OutStringTransparent((char *)"Orange:");
-      ST7735_SetTextColor(ST7735_WHITE);
-      if (orangeCount < 10) {
-        ST7735_OutUDec(0);
-      }
-      ST7735_OutUDec(orangeCount);
+     
     
       
       // Store the previous position of the ball
