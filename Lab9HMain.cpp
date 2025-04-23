@@ -402,7 +402,7 @@ void DrawGameOver() {
         
         // Display score value with highlight
         ST7735_SetTextColor(ST7735_WHITE);
-        ST7735_SetCursor(10, 7);
+        ST7735_SetCursor(8, 7);
         ST7735_OutUDec(gameState.getScore());
         
         // Draw footer with return instructions
@@ -433,9 +433,16 @@ void DrawLevelTransition() {
   ST7735_DrawFastVLine(14, 40, 30, ST7735_CYAN);     // left
     
   // Display level text
-  ST7735_SetTextColor(MENU_TITLE_COLOR);
-  ST7735_SetCursor(5, 5);
-  ST7735_OutString((char *)"LEVEL 2");
+  if (checkLang) {
+    ST7735_SetTextColor(MENU_TITLE_COLOR);
+    ST7735_SetCursor(5, 5);
+    ST7735_OutString((char *)"LEVEL 2");
+  } else {
+    ST7735_SetTextColor(MENU_TITLE_COLOR);
+    ST7735_SetCursor(5, 5);
+    ST7735_OutString((char *)"NIVEL 2");
+  }
+  
   
   // Draw fancy separator
   for(int i = 0; i < 80; i+=4) {
@@ -444,19 +451,37 @@ void DrawLevelTransition() {
   }
 
   // Display encouraging message
-  ST7735_SetTextColor(MENU_NORMAL_COLOR);
-  ST7735_SetCursor(6, 9);
-  ST7735_OutString((char *)"GREAT JOB!");
+  if (checkLang) {
+    ST7735_SetTextColor(MENU_NORMAL_COLOR);
+    ST7735_SetCursor(6, 9);
+    ST7735_OutString((char *)"GREAT JOB!");
   
-  ST7735_SetCursor(4, 11);
-  ST7735_OutString((char *)"GET READY FOR");
-  ST7735_SetCursor(5, 12);
-  ST7735_OutString((char *)"MORE ACTION!");
+    ST7735_SetCursor(4, 11);
+    ST7735_OutString((char *)"GET READY FOR");
+    ST7735_SetCursor(5, 12);
+    ST7735_OutString((char *)"MORE ACTION!");
+  } else {
+    ST7735_SetTextColor(MENU_NORMAL_COLOR);
+    ST7735_SetCursor(5, 9);
+    ST7735_OutString((char *)"GRAN TRABAJO!");
+  
+    ST7735_SetCursor(4, 11);
+    ST7735_OutString((char *)"PREPARATE PARA");
+    ST7735_SetCursor(6, 12);
+    ST7735_OutString((char *)"MAS ACCION!");
+  }
+  
   
   // Footer instruction
   ST7735_SetTextColor(MENU_FOOTER_COLOR);
-  ST7735_SetCursor(3, 15);
-  ST7735_OutString((char *)"Left to continue");
+  
+if (checkLang) {
+  ST7735_SetCursor(6, 14);
+  ST7735_OutString((char *)"UP: Return");
+} else {
+  ST7735_SetCursor(3, 14);
+  ST7735_OutString((char *)"ARRIBA: Aceptar");
+}
   
   // Sound effect
   Sound_Killed();
@@ -474,31 +499,59 @@ void DrawYouWonScreen() {
   
   // Display congratulatory title with flashing effect
   for(int i = 0; i < 3; i++) {
-    ST7735_SetTextColor(ST7735_GREEN);
-    ST7735_SetCursor(7, 3);
-    ST7735_OutString((char *)"YOU WON!");
-    Clock_Delay1ms(200);
-    ST7735_SetTextColor(ST7735_YELLOW);
-    ST7735_SetCursor(7, 3);
-    ST7735_OutString((char *)"YOU WON!");
-    Clock_Delay1ms(200);
+    if (checkLang) {
+      ST7735_SetTextColor(ST7735_GREEN);
+      ST7735_SetCursor(7, 3);
+      ST7735_OutString((char *)"YOU WON!");
+      Clock_Delay1ms(200);
+      ST7735_SetTextColor(ST7735_YELLOW);
+      ST7735_SetCursor(7, 3);
+      ST7735_OutString((char *)"YOU WON!");
+      Clock_Delay1ms(200);
+    } else {
+      ST7735_SetTextColor(ST7735_GREEN);
+      ST7735_SetCursor(7, 3);
+      ST7735_OutString((char *)"GANASTE!");
+      Clock_Delay1ms(200);
+      ST7735_SetTextColor(ST7735_YELLOW);
+      ST7735_SetCursor(7, 3);
+      ST7735_OutString((char *)"GANASTE!");
+      Clock_Delay1ms(200);
+    }
+    
   }
   
   // Draw congratulatory message
-  ST7735_SetTextColor(ST7735_WHITE);
-  ST7735_SetCursor(3, 6);
-  ST7735_OutString((char *)"CONGRATULATIONS");
-    
-  ST7735_SetTextColor(ST7735_WHITE);
-  ST7735_SetCursor(8, 9);
-  ST7735_OutString((char *)"SCORE:");
+  if (checkLang) {
+    ST7735_SetTextColor(ST7735_WHITE);
+    ST7735_SetCursor(3, 6);
+    ST7735_OutString((char *)"CONGRATULATIONS");
+      
+    ST7735_SetTextColor(ST7735_WHITE);
+    ST7735_SetCursor(8, 9);
+    ST7735_OutString((char *)"SCORE:");
+  } else {
+    ST7735_SetTextColor(ST7735_WHITE);
+    ST7735_SetCursor(5, 6);
+    ST7735_OutString((char *)"FELICIDADES");
+      
+    ST7735_SetTextColor(ST7735_WHITE);
+    ST7735_SetCursor(7, 9);
+    ST7735_OutString((char *)"PUNTAJE:");
+  }
+  
   ST7735_SetCursor(9, 10);
   ST7735_OutUDec(gameState.getScore());
   
   // Footer instruction
   ST7735_SetTextColor(MENU_FOOTER_COLOR);
-  ST7735_SetCursor(1, 15);
-  ST7735_OutString((char *)"Press LEFT for menu");
+  if (checkLang) {
+    ST7735_SetCursor(6, 14);
+    ST7735_OutString((char *)"UP: Return");
+  } else {
+    ST7735_SetCursor(3, 14);
+    ST7735_OutString((char *)"ARRIBA: Aceptar");
+  }
   
   // Play victory sounds
   Sound_Killed();
